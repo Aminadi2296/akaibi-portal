@@ -31,18 +31,10 @@ export default function UploadPage() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
-    const payload = {
-      projectId: Number(formData.get("projectId")),
-      owner: formData.get("owner"),
-      dateRecorded: formData.get("dateRecorded"),
-      place: formData.get("place"),
-      uploadedBy: "employee-test", // hardcoded for now, real auth comes later
-    };
 
-    const res = await fetch("/api/documents", {
+    const res = await fetch("/api/upload", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: formData, // sent as multipart/form-data, not JSON, since it includes a file
     });
 
     const data = await res.json();
@@ -60,7 +52,10 @@ export default function UploadPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Upload Document</CardTitle>
-          <CardDescription>Enter the document details</CardDescription>
+          <CardDescription>
+            Select a project and upload the file. You&apos;ll index its
+            details afterward.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,20 +72,12 @@ export default function UploadPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="owner">Owner</Label>
-              <Input id="owner" name="owner" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dateRecorded">Date</Label>
-              <Input id="dateRecorded" name="dateRecorded" type="date" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="place">Place</Label>
-              <Input id="place" name="place" required />
+              <Label htmlFor="file">File</Label>
+              <Input id="file" name="file" type="file" required />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Saving..." : "Save Document"}
+              {loading ? "Uploading..." : "Upload"}
             </Button>
           </form>
         </CardContent>
