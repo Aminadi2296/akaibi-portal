@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   FileText,
   FileSpreadsheet,
@@ -8,25 +8,26 @@ import {
   File as FileIcon,
   Search,
   Upload as UploadIcon,
-} from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Eye,
+} from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+} from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 type ProjectRow = {
   id: number;
@@ -59,48 +60,48 @@ type DocumentRow = {
 // Picks an icon based on the file extension, mirroring the reference design's
 // per-file-type icons (pdf/doc/xls/image/etc.)
 function FileTypeIcon({ filename }: { filename: string | null }) {
-  const ext = filename?.split(".").pop()?.toLowerCase() ?? "";
-  const commonClass = "size-5 shrink-0";
+  const ext = filename?.split('.').pop()?.toLowerCase() ?? '';
+  const commonClass = 'size-5 shrink-0';
 
-  if (["xls", "xlsx", "csv"].includes(ext)) {
-    return <FileSpreadsheet className={cn(commonClass, "text-emerald-600")} />;
+  if (['xls', 'xlsx', 'csv'].includes(ext)) {
+    return <FileSpreadsheet className={cn(commonClass, 'text-emerald-600')} />;
   }
-  if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext)) {
-    return <ImageIcon className={cn(commonClass, "text-violet-600")} />;
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) {
+    return <ImageIcon className={cn(commonClass, 'text-violet-600')} />;
   }
-  if (["pdf", "doc", "docx"].includes(ext)) {
-    return <FileText className={cn(commonClass, "text-red-600")} />;
+  if (['pdf', 'doc', 'docx'].includes(ext)) {
+    return <FileText className={cn(commonClass, 'text-red-600')} />;
   }
-  return <FileIcon className={cn(commonClass, "text-muted-foreground")} />;
+  return <FileIcon className={cn(commonClass, 'text-muted-foreground')} />;
 }
 
 // small local helper so we don't need an extra import just for this file
 function cn(...classes: (string | undefined | false)[]) {
-  return classes.filter(Boolean).join(" ");
+  return classes.filter(Boolean).join(' ');
 }
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<ProjectRow[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
 
   const [indexed, setIndexed] = useState<DocumentRow[]>([]);
   const [pending, setPending] = useState<DocumentRow[]>([]);
   const [loadingDocs, setLoadingDocs] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState("");
+  const [uploadError, setUploadError] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const [indexingDoc, setIndexingDoc] = useState<DocumentRow | null>(null);
-  const [indexOwner, setIndexOwner] = useState("");
-  const [indexDate, setIndexDate] = useState("");
-  const [indexPlace, setIndexPlace] = useState("");
+  const [indexOwner, setIndexOwner] = useState('');
+  const [indexDate, setIndexDate] = useState('');
+  const [indexPlace, setIndexPlace] = useState('');
   const [indexSubmitting, setIndexSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch("/api/projects")
+    fetch('/api/projects')
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -125,7 +126,11 @@ export default function DashboardPage() {
   }, [selectedProjectId]);
 
   useEffect(() => {
-    loadDocuments();
+    const timeoutId = window.setTimeout(() => {
+      void loadDocuments();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadDocuments]);
 
   const filteredIndexed = useMemo(() => {
@@ -134,7 +139,7 @@ export default function DashboardPage() {
     return indexed.filter((doc) =>
       [doc.s3_key, doc.owner, doc.place]
         .filter(Boolean)
-        .some((field) => field!.toLowerCase().includes(q))
+        .some((field) => field!.toLowerCase().includes(q)),
     );
   }, [indexed, search]);
 
@@ -143,13 +148,13 @@ export default function DashboardPage() {
     if (!uploadFile || !selectedProjectId) return;
 
     setUploading(true);
-    setUploadError("");
+    setUploadError('');
 
     const formData = new FormData();
-    formData.append("file", uploadFile);
-    formData.append("projectId", selectedProjectId);
+    formData.append('file', uploadFile);
+    formData.append('projectId', selectedProjectId);
 
-    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
     const data = await res.json();
     setUploading(false);
 
@@ -165,9 +170,9 @@ export default function DashboardPage() {
 
   function openIndexDialog(doc: DocumentRow) {
     setIndexingDoc(doc);
-    setIndexOwner("");
-    setIndexDate("");
-    setIndexPlace("");
+    setIndexOwner('');
+    setIndexDate('');
+    setIndexPlace('');
   }
 
   async function submitIndexing() {
@@ -175,8 +180,8 @@ export default function DashboardPage() {
     setIndexSubmitting(true);
 
     const res = await fetch(`/api/documents/${indexingDoc.id}/index`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         owner: indexOwner,
         dateRecorded: indexDate,
@@ -193,7 +198,7 @@ export default function DashboardPage() {
   }
 
   const selectedProject = projects.find(
-    (p) => String(p.id) === selectedProjectId
+    (p) => String(p.id) === selectedProjectId,
   );
 
   return (
@@ -205,7 +210,7 @@ export default function DashboardPage() {
             <p className="text-sm text-muted-foreground">
               {selectedProject
                 ? `${selectedProject.name} · ${selectedProject.company_name}`
-                : "Select a project to get started"}
+                : 'Select a project to get started'}
             </p>
           </div>
 
@@ -255,13 +260,13 @@ export default function DashboardPage() {
                   )}
                   <DialogFooter>
                     <DialogClose
-                      className={buttonVariants({ variant: "outline" })}
+                      className={buttonVariants({ variant: 'outline' })}
                       type="button"
                     >
                       Cancel
                     </DialogClose>
                     <Button type="submit" disabled={uploading}>
-                      {uploading ? "Uploading..." : "Upload"}
+                      {uploading ? 'Uploading...' : 'Upload'}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -308,14 +313,13 @@ export default function DashboardPage() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b bg-muted/40 text-left text-muted-foreground">
-                            <th className="px-4 py-3 font-medium">
-                              Document
-                            </th>
+                            <th className="px-4 py-3 font-medium">Document</th>
                             <th className="px-4 py-3 font-medium">Owner</th>
                             <th className="px-4 py-3 font-medium">Date</th>
                             <th className="px-4 py-3 font-medium">Place</th>
-                            <th className="px-4 py-3 font-medium">
-                              Uploaded
+                            <th className="px-4 py-3 font-medium">Uploaded</th>
+                            <th className="px-4 py-3 font-medium text-right">
+                              See
                             </th>
                           </tr>
                         </thead>
@@ -337,13 +341,24 @@ export default function DashboardPage() {
                               <td className="px-4 py-3">
                                 {doc.date_recorded
                                   ? new Date(
-                                      doc.date_recorded
+                                      doc.date_recorded,
                                     ).toLocaleDateString()
-                                  : ""}
+                                  : ''}
                               </td>
                               <td className="px-4 py-3">{doc.place}</td>
                               <td className="px-4 py-3 text-muted-foreground">
                                 {new Date(doc.created_at).toLocaleDateString()}
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <a
+                                  href={`/api/files/${encodeURIComponent(doc.s3_key ?? '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center justify-center rounded-md p-2 hover:bg-muted"
+                                  title="View document"
+                                >
+                                  <Eye className="size-4 text-muted-foreground" />
+                                </a>
                               </td>
                             </tr>
                           ))}
@@ -446,13 +461,13 @@ export default function DashboardPage() {
           </div>
           <DialogFooter>
             <DialogClose
-              className={buttonVariants({ variant: "outline" })}
+              className={buttonVariants({ variant: 'outline' })}
               type="button"
             >
               Cancel
             </DialogClose>
             <Button onClick={submitIndexing} disabled={indexSubmitting}>
-              {indexSubmitting ? "Saving..." : "Save & Mark Indexed"}
+              {indexSubmitting ? 'Saving...' : 'Save & Mark Indexed'}
             </Button>
           </DialogFooter>
         </DialogContent>
