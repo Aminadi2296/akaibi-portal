@@ -8,14 +8,24 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { owner, dateRecorded, place } = body;
+    const { owner, dateRecorded, place, customFields } = body;
 
     const result = await pool.query(
       `UPDATE documents
-       SET owner = $1, date_recorded = $2, place = $3, status = 'indexed'
-       WHERE id = $4
+       SET owner = $1,
+           date_recorded = $2,
+           place = $3,
+           custom_fields = $4,
+           status = 'indexed'
+       WHERE id = $5
        RETURNING *`,
-      [owner, dateRecorded, place, id]
+      [
+        owner ?? null,
+        dateRecorded ?? null,
+        place ?? null,
+        JSON.stringify(customFields ?? {}),
+        id,
+      ]
     );
 
     return NextResponse.json({ success: true, document: result.rows[0] });

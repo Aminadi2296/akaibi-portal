@@ -54,8 +54,64 @@ type DocumentRow = {
   s3_key: string | null;
   status: string;
   uploaded_by: string;
+  custom_fields: Record<string, string> | null;
   created_at: string;
 };
+
+// ---- Per-project-type indexing field schemas ----
+// Each field either maps to a real documents table column (owner/date_recorded/place)
+// or, if it has no mapsTo, gets stored inside the flexible custom_fields JSONB column.
+// This is how different companies/projects can have completely different document
+// structures (e.g. an invoice vs a medical bill) without changing the database schema.
+type FieldDef = {
+  key: string;
+  label: string;
+  type: 'text' | 'date';
+  mapsTo?: 'owner' | 'date_recorded' | 'place';
+};
+
+const FIELD_SCHEMAS: Record<string, FieldDef[]> = {
+  medical: [
+    { key: 'owner', label: 'Owner', type: 'text', mapsTo: 'owner' },
+    {
+      key: 'date_recorded',
+      label: 'Date',
+      type: 'date',
+      mapsTo: 'date_recorded',
+    },
+    { key: 'place', label: 'Place', type: 'text', mapsTo: 'place' },
+  ],
+  contract: [
+    { key: 'owner', label: 'Owner', type: 'text', mapsTo: 'owner' },
+    {
+      key: 'date_recorded',
+      label: 'Date',
+      type: 'date',
+      mapsTo: 'date_recorded',
+    },
+    { key: 'place', label: 'Place', type: 'text', mapsTo: 'place' },
+  ],
+  invoice: [
+    { key: 'invoiceNumber', label: 'Invoice #', type: 'text' },
+    { key: 'controlNumber', label: 'Control #', type: 'text' },
+    { key: 'rif', label: 'RIF', type: 'text' },
+    { key: 'clientName', label: 'Client Name', type: 'text', mapsTo: 'owner' },
+    {
+      key: 'date_recorded',
+      label: 'Date',
+      type: 'date',
+      mapsTo: 'date_recorded',
+    },
+    { key: 'totalAmount', label: 'Total (Bs.)', type: 'text' },
+  ],
+};
+
+const DEFAULT_SCHEMA = FIELD_SCHEMAS.medical;
+
+function getSchemaFor(projectType: string | undefined): FieldDef[] {
+  if (!projectType) return DEFAULT_SCHEMA;
+  return FIELD_SCHEMAS[projectType] ?? DEFAULT_SCHEMA;
+}
 
 function FileTypeIcon({ filename }: { filename: string | null }) {
   const ext = filename?.split('.').pop()?.toLowerCase() ?? '';
@@ -133,9 +189,9 @@ export default function DashboardPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const [indexingDoc, setIndexingDoc] = useState<DocumentRow | null>(null);
-  const [indexOwner, setIndexOwner] = useState('');
-  const [indexDate, setIndexDate] = useState('');
-  const [indexPlace, setIndexPlace] = useState('');
+  // Generic bag of field values, keyed by each schema field's `key`.
+  // Which keys exist depends entirely on the selected project's type.
+  const [indexValues, setIndexValues] = useState<Record<string, string>>({});
   const [indexSubmitting, setIndexSubmitting] = useState(false);
 
   useEffect(() => {
@@ -161,6 +217,7 @@ export default function DashboardPage() {
       setPending(data.pending);
     }
     setLoadingDocs(false);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [selectedProjectId]);
 
   useEffect(() => {
@@ -205,23 +262,38 @@ export default function DashboardPage() {
 
   function openIndexDialog(doc: DocumentRow) {
     setIndexingDoc(doc);
-    setIndexOwner('');
-    setIndexDate('');
-    setIndexPlace('');
+    setIndexValues({});
   }
+
+  const selectedProject = projects.find(
+    (p) => String(p.id) === selectedProjectId,
+  );
+
+  const activeSchema = getSchemaFor(selectedProject?.project_type);
 
   async function submitIndexing() {
     if (!indexingDoc) return;
     setIndexSubmitting(true);
 
+    // Split the generic indexValues bag into real columns (owner/date/place)
+    // vs. everything else, which goes into custom_fields.
+    let owner: string | null = null;
+    let dateRecorded: string | null = null;
+    let place: string | null = null;
+    const customFields: Record<string, string> = {};
+
+    for (const field of activeSchema) {
+      const value = indexValues[field.key] ?? '';
+      if (field.mapsTo === 'owner') owner = value;
+      else if (field.mapsTo === 'date_recorded') dateRecorded = value;
+      else if (field.mapsTo === 'place') place = value;
+      else customFields[field.key] = value;
+    }
+
     const res = await fetch(`/api/documents/${indexingDoc.id}/index`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        owner: indexOwner,
-        dateRecorded: indexDate,
-        place: indexPlace,
-      }),
+      body: JSON.stringify({ owner, dateRecorded, place, customFields }),
     });
     const data = await res.json();
     setIndexSubmitting(false);
@@ -231,10 +303,6 @@ export default function DashboardPage() {
       loadDocuments();
     }
   }
-
-  const selectedProject = projects.find(
-    (p) => String(p.id) === selectedProjectId,
-  );
 
   return (
     <main className="min-h-screen bg-muted p-6 md:p-10">
@@ -448,6 +516,7 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* Indexing dialog: near-full-screen, split panel, dynamic fields */}
       <Dialog
         open={!!indexingDoc}
         onOpenChange={(open) => {
@@ -457,7 +526,9 @@ export default function DashboardPage() {
         <DialogContent className="flex h-[90vh] max-w-6xl flex-col">
           <DialogHeader>
             <DialogTitle>Index Document</DialogTitle>
-            <DialogDescription>{indexingDoc?.s3_key}</DialogDescription>
+            <DialogDescription>
+              {indexingDoc?.s3_key} · {selectedProject?.name}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-1 gap-6 overflow-hidden">
@@ -466,34 +537,23 @@ export default function DashboardPage() {
             </div>
 
             <div className="w-80 shrink-0 space-y-4 overflow-y-auto">
-              <div className="space-y-2">
-                <Label htmlFor="index-owner">Owner</Label>
-                <Input
-                  id="index-owner"
-                  value={indexOwner}
-                  onChange={(e) => setIndexOwner(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="index-date">Date</Label>
-                <Input
-                  id="index-date"
-                  type="date"
-                  value={indexDate}
-                  onChange={(e) => setIndexDate(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="index-place">Place</Label>
-                <Input
-                  id="index-place"
-                  value={indexPlace}
-                  onChange={(e) => setIndexPlace(e.target.value)}
-                  required
-                />
-              </div>
+              {activeSchema.map((field) => (
+                <div key={field.key} className="space-y-2">
+                  <Label htmlFor={`index-${field.key}`}>{field.label}</Label>
+                  <Input
+                    id={`index-${field.key}`}
+                    type={field.type}
+                    value={indexValues[field.key] ?? ''}
+                    onChange={(e) =>
+                      setIndexValues((prev) => ({
+                        ...prev,
+                        [field.key]: e.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </div>
+              ))}
             </div>
           </div>
 
