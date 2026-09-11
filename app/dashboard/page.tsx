@@ -57,8 +57,6 @@ type DocumentRow = {
   created_at: string;
 };
 
-// Picks an icon based on the file extension, mirroring the reference design's
-// per-file-type icons (pdf/doc/xls/image/etc.)
 function FileTypeIcon({ filename }: { filename: string | null }) {
   const ext = filename?.split('.').pop()?.toLowerCase() ?? '';
   const commonClass = 'size-5 shrink-0';
@@ -75,9 +73,49 @@ function FileTypeIcon({ filename }: { filename: string | null }) {
   return <FileIcon className={cn(commonClass, 'text-muted-foreground')} />;
 }
 
-// small local helper so we don't need an extra import just for this file
 function cn(...classes: (string | undefined | false)[]) {
   return classes.filter(Boolean).join(' ');
+}
+
+function DocumentPreview({ filename }: { filename: string | null }) {
+  if (!filename) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        No file
+      </div>
+    );
+  }
+
+  const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+  const fileUrl = `/api/files/${encodeURIComponent(filename)}`;
+
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) {
+    return (
+      <img
+        src={fileUrl}
+        alt={filename}
+        className="h-full w-full object-contain"
+      />
+    );
+  }
+
+  if (ext === 'pdf') {
+    return <iframe src={fileUrl} className="h-full w-full" title={filename} />;
+  }
+
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+      <span>Preview not available for this file type.</span>
+      <a
+        href={fileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={buttonVariants({ variant: 'outline', size: 'sm' })}
+      >
+        Open in new tab
+      </a>
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -126,11 +164,8 @@ export default function DashboardPage() {
   }, [selectedProjectId]);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void loadDocuments();
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadDocuments();
   }, [loadDocuments]);
 
   const filteredIndexed = useMemo(() => {
@@ -284,7 +319,6 @@ export default function DashboardPage() {
               </TabsTrigger>
             </TabsList>
 
-            {/* ---- All: indexed documents, styled table ---- */}
             <TabsContent value="all">
               <Card className="overflow-hidden py-0">
                 <div className="border-b p-4">
@@ -318,7 +352,7 @@ export default function DashboardPage() {
                             <th className="px-4 py-3 font-medium">Date</th>
                             <th className="px-4 py-3 font-medium">Place</th>
                             <th className="px-4 py-3 font-medium">Uploaded</th>
-                            <th className="px-4 py-3 font-medium text-right">
+                            <th className="px-4 py-3 text-right font-medium">
                               See
                             </th>
                           </tr>
@@ -370,7 +404,6 @@ export default function DashboardPage() {
               </Card>
             </TabsContent>
 
-            {/* ---- Pending: awaiting indexing ---- */}
             <TabsContent value="pending">
               <Card>
                 <CardHeader>
@@ -415,50 +448,55 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Indexing dialog */}
       <Dialog
         open={!!indexingDoc}
         onOpenChange={(open) => {
           if (!open) setIndexingDoc(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="flex h-[90vh] max-w-6xl flex-col">
           <DialogHeader>
             <DialogTitle>Index Document</DialogTitle>
-            <DialogDescription>
-              Fill in the details for {indexingDoc?.s3_key}
-            </DialogDescription>
+            <DialogDescription>{indexingDoc?.s3_key}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="index-owner">Owner</Label>
-              <Input
-                id="index-owner"
-                value={indexOwner}
-                onChange={(e) => setIndexOwner(e.target.value)}
-                required
-              />
+
+          <div className="flex flex-1 gap-6 overflow-hidden">
+            <div className="flex-1 overflow-hidden rounded-lg border bg-muted">
+              {indexingDoc && <DocumentPreview filename={indexingDoc.s3_key} />}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="index-date">Date</Label>
-              <Input
-                id="index-date"
-                type="date"
-                value={indexDate}
-                onChange={(e) => setIndexDate(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="index-place">Place</Label>
-              <Input
-                id="index-place"
-                value={indexPlace}
-                onChange={(e) => setIndexPlace(e.target.value)}
-                required
-              />
+
+            <div className="w-80 shrink-0 space-y-4 overflow-y-auto">
+              <div className="space-y-2">
+                <Label htmlFor="index-owner">Owner</Label>
+                <Input
+                  id="index-owner"
+                  value={indexOwner}
+                  onChange={(e) => setIndexOwner(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="index-date">Date</Label>
+                <Input
+                  id="index-date"
+                  type="date"
+                  value={indexDate}
+                  onChange={(e) => setIndexDate(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="index-place">Place</Label>
+                <Input
+                  id="index-place"
+                  value={indexPlace}
+                  onChange={(e) => setIndexPlace(e.target.value)}
+                  required
+                />
+              </div>
             </div>
           </div>
+
           <DialogFooter>
             <DialogClose
               className={buttonVariants({ variant: 'outline' })}
