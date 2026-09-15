@@ -58,11 +58,11 @@ type DocumentRow = {
   created_at: string;
 };
 
-// ---- Per-project-type indexing field schemas ----
+// ---- Per-project-type field schemas ----
 // Each field either maps to a real documents table column (owner/date_recorded/place)
-// or, if it has no mapsTo, gets stored inside the flexible custom_fields JSONB column.
-// This is how different companies/projects can have completely different document
-// structures (e.g. an invoice vs a medical bill) without changing the database schema.
+// or, if it has no mapsTo, lives inside the flexible custom_fields JSONB column.
+// This same schema drives BOTH the indexing form fields AND the "All" tab table
+// columns, so a project's document list always matches the fields it was indexed with.
 type FieldDef = {
   key: string;
   label: string;
@@ -111,6 +111,23 @@ const DEFAULT_SCHEMA = FIELD_SCHEMAS.medical;
 function getSchemaFor(projectType: string | undefined): FieldDef[] {
   if (!projectType) return DEFAULT_SCHEMA;
   return FIELD_SCHEMAS[projectType] ?? DEFAULT_SCHEMA;
+}
+
+// Reads a field's value off a document row, regardless of whether it lives in
+// a real column (owner/date_recorded/place) or inside custom_fields.
+function getFieldValue(doc: DocumentRow, field: FieldDef): string {
+  let raw: string | null;
+  if (field.mapsTo) {
+    raw = doc[field.mapsTo];
+  } else {
+    raw = doc.custom_fields?.[field.key] ?? null;
+  }
+  if (!raw) return '';
+  if (field.type === 'date') {
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? raw : d.toLocaleDateString();
+  }
+  return raw;
 }
 
 function FileTypeIcon({ filename }: { filename: string | null }) {
@@ -189,8 +206,6 @@ export default function DashboardPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const [indexingDoc, setIndexingDoc] = useState<DocumentRow | null>(null);
-  // Generic bag of field values, keyed by each schema field's `key`.
-  // Which keys exist depends entirely on the selected project's type.
   const [indexValues, setIndexValues] = useState<Record<string, string>>({});
   const [indexSubmitting, setIndexSubmitting] = useState(false);
 
@@ -225,15 +240,23 @@ export default function DashboardPage() {
     loadDocuments();
   }, [loadDocuments]);
 
+  const selectedProject = projects.find(
+    (p) => String(p.id) === selectedProjectId,
+  );
+
+  const activeSchema = getSchemaFor(selectedProject?.project_type);
+
   const filteredIndexed = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return indexed;
-    return indexed.filter((doc) =>
-      [doc.s3_key, doc.owner, doc.place]
-        .filter(Boolean)
-        .some((field) => field!.toLowerCase().includes(q)),
-    );
-  }, [indexed, search]);
+    return indexed.filter((doc) => {
+      const haystack = [
+        doc.s3_key ?? '',
+        ...activeSchema.map((field) => getFieldValue(doc, field)),
+      ];
+      return haystack.some((field) => field.toLowerCase().includes(q));
+    });
+  }, [indexed, search, activeSchema]);
 
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -265,18 +288,10 @@ export default function DashboardPage() {
     setIndexValues({});
   }
 
-  const selectedProject = projects.find(
-    (p) => String(p.id) === selectedProjectId,
-  );
-
-  const activeSchema = getSchemaFor(selectedProject?.project_type);
-
   async function submitIndexing() {
     if (!indexingDoc) return;
     setIndexSubmitting(true);
 
-    // Split the generic indexValues bag into real columns (owner/date/place)
-    // vs. everything else, which goes into custom_fields.
     let owner: string | null = null;
     let dateRecorded: string | null = null;
     let place: string | null = null;
@@ -387,13 +402,14 @@ export default function DashboardPage() {
               </TabsTrigger>
             </TabsList>
 
+            {/* ---- All: indexed documents, columns driven by the project's schema ---- */}
             <TabsContent value="all">
               <Card className="overflow-hidden py-0">
                 <div className="border-b p-4">
                   <div className="relative">
                     <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="Search by file, owner, or place..."
+                      placeholder="Search..."
                       className="pl-9"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
@@ -416,9 +432,14 @@ export default function DashboardPage() {
                         <thead>
                           <tr className="border-b bg-muted/40 text-left text-muted-foreground">
                             <th className="px-4 py-3 font-medium">Document</th>
-                            <th className="px-4 py-3 font-medium">Owner</th>
-                            <th className="px-4 py-3 font-medium">Date</th>
-                            <th className="px-4 py-3 font-medium">Place</th>
+                            {activeSchema.map((field) => (
+                              <th
+                                key={field.key}
+                                className="px-4 py-3 font-medium"
+                              >
+                                {field.label}
+                              </th>
+                            ))}
                             <th className="px-4 py-3 font-medium">Uploaded</th>
                             <th className="px-4 py-3 text-right font-medium">
                               See
@@ -432,22 +453,15 @@ export default function DashboardPage() {
                               className="border-b last:border-0 hover:bg-muted/30"
                             >
                               <td className="px-4 py-3">
-                                <div className="flex items-center gap-3">
-                                  <FileTypeIcon filename={doc.s3_key} />
-                                  <span className="max-w-[220px] truncate font-medium">
-                                    {doc.s3_key}
-                                  </span>
-                                </div>
+                                <span className="max-w-[220px] truncate font-medium">
+                                  {doc.s3_key}
+                                </span>
                               </td>
-                              <td className="px-4 py-3">{doc.owner}</td>
-                              <td className="px-4 py-3">
-                                {doc.date_recorded
-                                  ? new Date(
-                                      doc.date_recorded,
-                                    ).toLocaleDateString()
-                                  : ''}
-                              </td>
-                              <td className="px-4 py-3">{doc.place}</td>
+                              {activeSchema.map((field) => (
+                                <td key={field.key} className="px-4 py-3">
+                                  {getFieldValue(doc, field)}
+                                </td>
+                              ))}
                               <td className="px-4 py-3 text-muted-foreground">
                                 {new Date(doc.created_at).toLocaleDateString()}
                               </td>
@@ -492,12 +506,9 @@ export default function DashboardPage() {
                           key={doc.id}
                           className="flex items-center justify-between rounded-lg border p-3"
                         >
-                          <div className="flex items-center gap-3">
-                            <FileTypeIcon filename={doc.s3_key} />
-                            <span className="max-w-[280px] truncate text-sm">
-                              {doc.s3_key}
-                            </span>
-                          </div>
+                          <span className="max-w-[280px] truncate text-sm">
+                            {doc.s3_key}
+                          </span>
                           <Button
                             size="sm"
                             variant="outline"
@@ -523,7 +534,7 @@ export default function DashboardPage() {
           if (!open) setIndexingDoc(null);
         }}
       >
-        <DialogContent className="flex h-[90vh] max-w-6xl flex-col">
+        <DialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none">
           <DialogHeader>
             <DialogTitle>Index Document</DialogTitle>
             <DialogDescription>
