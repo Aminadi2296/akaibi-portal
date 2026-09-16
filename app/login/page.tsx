@@ -1,13 +1,13 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 
 export default function LoginPage({
   searchParams,
@@ -26,17 +26,15 @@ export default function LoginPage({
         <CardContent>
           <form method="POST" action="/api/login" className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" name="username" type="text" required />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" type="email" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
             </div>
             {searchParams?.error && (
-              <p className='text-sm text-red-500'>
-                {searchParams.error}
-              </p>
+              <p className="text-sm text-red-500">{searchParams.error}</p>
             )}
             <Button type="submit" className="w-full">
               Sign In
