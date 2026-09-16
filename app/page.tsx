@@ -1,8 +1,12 @@
-export default function Home() {
-  return (
-    <main style={{ padding: 40 }}>
-      <h1>Akaibi Portal</h1>
-      <p>Employee login coming next.</p>
-    </main>
-  );
+import { redirect } from 'next/navigation';
+import { getSession } from '@/lib/session';
+
+export default async function Home() {
+  const session = await getSession();
+
+  if (session.isLoggedIn) {
+    redirect('/dashboard');
+  } else {
+    redirect('/login');
+  }
 }
