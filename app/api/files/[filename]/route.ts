@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import path from 'path';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
-const MIME_TYPES: Record<string, string> = {
-  pdf: 'application/pdf',
-  png: 'image/png',
-  jpg: 'image/jpeg',
-  jpeg: 'image/jpeg',
-  gif: 'image/gif',
-  webp: 'image/webp',
-  doc: 'application/msword',
-  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  xls: 'application/vnd.ms-excel',
-  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  csv: 'text/csv',
-};
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export async function GET(
   request: NextRequest,
@@ -22,21 +16,18 @@ export async function GET(
 ) {
   try {
     const { filename } = await params;
+    const safeName = decodeURIComponent(filename);
 
-    // Strip any directory parts so a filename can never escape the uploads folder
-    const safeName = path.basename(decodeURIComponent(filename));
-    const filePath = path.join(process.cwd(), 'uploads', safeName);
-
-    const fileBuffer = await readFile(filePath);
-    const ext = safeName.split('.').pop()?.toLowerCase() ?? '';
-    const contentType = MIME_TYPES[ext] ?? 'application/octet-stream';
-
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': contentType,
-        'Content-Disposition': `inline; filename="${safeName}"`,
-      },
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: safeName,
     });
+
+    // Generates a temporary, secure link (expires in 5 minutes) instead of
+    // exposing the file publicly or streaming it through our own server.
+    const url = await getSignedUrl(s3, command, { expiresIn: 300 });
+
+    return NextResponse.redirect(url);
   } catch {
     return NextResponse.json({ error: 'File not found' }, { status: 404 });
   }

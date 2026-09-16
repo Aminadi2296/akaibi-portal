@@ -1,49 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const projectId = formData.get('projectId') as string;
-    const uploadedBy = 'employee-test'; // hardcoded for now, real auth later
+    const uploadedBy = 'employee-test';
 
     if (!file) {
       return NextResponse.json(
         { success: false, error: 'No file provided' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Ensure the uploads folder exists
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-
-    // Create a unique filename to avoid collisions
     const timestamp = Date.now();
     const safeFileName = `${timestamp}-${file.name}`;
-    const filePath = path.join(uploadsDir, safeFileName);
 
-    // Convert the uploaded file into bytes and save it to disk
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
 
-    // Save a "pending" record in the database, pointing to this file
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: safeFileName,
+        Body: buffer,
+        ContentType: file.type,
+      }),
+    );
+
     const result = await pool.query(
       `INSERT INTO documents (project_id, s3_key, uploaded_by, status)
        VALUES ($1, $2, $3, 'pending')
        RETURNING *`,
-      [projectId, safeFileName, uploadedBy]
+      [projectId, safeFileName, uploadedBy],
     );
 
     return NextResponse.json({ success: true, document: result.rows[0] });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
