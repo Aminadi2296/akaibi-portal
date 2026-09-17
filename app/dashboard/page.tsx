@@ -58,11 +58,6 @@ type DocumentRow = {
   created_at: string;
 };
 
-// ---- Per-project-type field schemas ----
-// Each field either maps to a real documents table column (owner/date_recorded/place)
-// or, if it has no mapsTo, lives inside the flexible custom_fields JSONB column.
-// This same schema drives BOTH the indexing form fields AND the "All" tab table
-// columns, so a project's document list always matches the fields it was indexed with.
 type FieldDef = {
   key: string;
   label: string;
@@ -72,7 +67,7 @@ type FieldDef = {
 
 const FIELD_SCHEMAS: Record<string, FieldDef[]> = {
   medical: [
-    { key: 'owner', label: 'Owner', type: 'text', mapsTo: 'owner' },
+    { key: 'owner', label: 'Owner / Patient', type: 'text', mapsTo: 'owner' },
     {
       key: 'date_recorded',
       label: 'Date',
@@ -82,7 +77,7 @@ const FIELD_SCHEMAS: Record<string, FieldDef[]> = {
     { key: 'place', label: 'Place', type: 'text', mapsTo: 'place' },
   ],
   contract: [
-    { key: 'owner', label: 'Owner', type: 'text', mapsTo: 'owner' },
+    { key: 'owner', label: 'Owner / Client', type: 'text', mapsTo: 'owner' },
     {
       key: 'date_recorded',
       label: 'Date',
@@ -92,13 +87,20 @@ const FIELD_SCHEMAS: Record<string, FieldDef[]> = {
     { key: 'place', label: 'Place', type: 'text', mapsTo: 'place' },
   ],
   invoice: [
-    { key: 'invoiceNumber', label: 'Invoice #', type: 'text' },
-    { key: 'controlNumber', label: 'Control #', type: 'text' },
-    { key: 'rif', label: 'RIF', type: 'text' },
-    { key: 'clientName', label: 'Client Name', type: 'text', mapsTo: 'owner' },
+    { key: 'clientName', label: 'Cliente (Receptor)', type: 'text' },
+    { key: 'clientRif', label: 'RIF / Cédula Cliente', type: 'text' },
+    {
+      key: 'vendorName',
+      label: 'Proveedor / Razón Social',
+      type: 'text',
+      mapsTo: 'owner',
+    },
+    { key: 'vendorRif', label: 'RIF Proveedor', type: 'text' },
+    { key: 'invoiceNumber', label: 'N° Factura', type: 'text' },
+    { key: 'controlNumber', label: 'N° Control', type: 'text' },
     {
       key: 'date_recorded',
-      label: 'Date',
+      label: 'Fecha Emisión',
       type: 'date',
       mapsTo: 'date_recorded',
     },
@@ -113,8 +115,6 @@ function getSchemaFor(projectType: string | undefined): FieldDef[] {
   return FIELD_SCHEMAS[projectType] ?? DEFAULT_SCHEMA;
 }
 
-// Reads a field's value off a document row, regardless of whether it lives in
-// a real column (owner/date_recorded/place) or inside custom_fields.
 function getFieldValue(doc: DocumentRow, field: FieldDef): string {
   let raw: string | null;
   if (field.mapsTo) {
@@ -132,7 +132,7 @@ function getFieldValue(doc: DocumentRow, field: FieldDef): string {
 
 function FileTypeIcon({ filename }: { filename: string | null }) {
   const ext = filename?.split('.').pop()?.toLowerCase() ?? '';
-  const commonClass = 'size-5 shrink-0';
+  const commonClass = 'size-4 shrink-0';
 
   if (['xls', 'xlsx', 'csv'].includes(ext)) {
     return <FileSpreadsheet className={cn(commonClass, 'text-emerald-600')} />;
@@ -232,7 +232,6 @@ export default function DashboardPage() {
       setPending(data.pending);
     }
     setLoadingDocs(false);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [selectedProjectId]);
 
   useEffect(() => {
@@ -319,9 +318,21 @@ export default function DashboardPage() {
     }
   }
 
+  // Identificamos los campos para omitirlos de las columnas dinámicas
+  const primaryKeys = [
+    'clientName',
+    'clientRif',
+    'vendorName',
+    'vendorRif',
+    'owner',
+  ];
+  const secondaryFields = activeSchema.filter(
+    (f) => !primaryKeys.includes(f.key),
+  );
+
   return (
     <main className="min-h-screen bg-muted p-6 md:p-10">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Documents</h1>
@@ -352,7 +363,7 @@ export default function DashboardPage() {
             <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
               <Button onClick={() => setUploadOpen(true)}>
                 <UploadIcon className="size-4" />
-                Upload
+                Subir Archivo
               </Button>
               <DialogContent>
                 <DialogHeader>
@@ -396,20 +407,19 @@ export default function DashboardPage() {
         {selectedProject && (
           <Tabs defaultValue="all">
             <TabsList>
-              <TabsTrigger value="all">All ({indexed.length})</TabsTrigger>
+              <TabsTrigger value="all">Todos ({indexed.length})</TabsTrigger>
               <TabsTrigger value="pending">
-                Pending ({pending.length})
+                Pendientes ({pending.length})
               </TabsTrigger>
             </TabsList>
 
-            {/* ---- All: indexed documents, columns driven by the project's schema ---- */}
             <TabsContent value="all">
               <Card className="overflow-hidden py-0">
                 <div className="border-b p-4">
                   <div className="relative">
                     <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="Search..."
+                      placeholder="Buscar..."
                       className="pl-9"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
@@ -424,60 +434,136 @@ export default function DashboardPage() {
                     </p>
                   ) : filteredIndexed.length === 0 ? (
                     <p className="p-6 text-sm text-muted-foreground">
-                      No documents match.
+                      No hay documentos que coincidan.
                     </p>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
+                    <div className="w-full">
+                      <table className="w-full table-fixed text-sm">
                         <thead>
                           <tr className="border-b bg-muted/40 text-left text-muted-foreground">
-                            <th className="px-4 py-3 font-medium">Document</th>
-                            {activeSchema.map((field) => (
+                            {/* Columna 1: Cliente / ID */}
+                            <th className="w-[20%] px-4 py-3 font-medium">
+                              Cliente
+                            </th>
+
+                            {/* Columna 2: Proveedor / RIF */}
+                            <th className="w-[20%] px-4 py-3 font-medium">
+                              Proveedor
+                            </th>
+
+                            {/* Columnas Secundarias (N° Factura, N° Control, Fecha Emisión, Total) */}
+                            {secondaryFields.map((field) => (
                               <th
                                 key={field.key}
-                                className="px-4 py-3 font-medium"
+                                className={cn(
+                                  'px-4 py-3 font-medium',
+                                  field.key === 'totalAmount'
+                                    ? 'text-right'
+                                    : '',
+                                )}
                               >
                                 {field.label}
                               </th>
                             ))}
-                            <th className="px-4 py-3 font-medium">Uploaded</th>
-                            <th className="px-4 py-3 text-right font-medium">
-                              See
+
+                            <th className="w-[10%] px-4 py-3 font-medium">
+                              Subido
+                            </th>
+                            <th className="w-[60px] px-4 py-3 text-right font-medium">
+                              Ver
                             </th>
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredIndexed.map((doc) => (
-                            <tr
-                              key={doc.id}
-                              className="border-b last:border-0 hover:bg-muted/30"
-                            >
-                              <td className="px-4 py-3">
-                                <span className="max-w-[220px] truncate font-medium">
-                                  {doc.s3_key}
-                                </span>
-                              </td>
-                              {activeSchema.map((field) => (
-                                <td key={field.key} className="px-4 py-3">
-                                  {getFieldValue(doc, field)}
+                          {filteredIndexed.map((doc) => {
+                            const clientName =
+                              doc.custom_fields?.clientName || doc.owner || '';
+                            const clientRif =
+                              doc.custom_fields?.clientRif || '';
+                            const vendorName =
+                              doc.custom_fields?.vendorName ||
+                              (doc.owner && !doc.custom_fields?.clientName
+                                ? doc.owner
+                                : '');
+                            const vendorRif =
+                              doc.custom_fields?.vendorRif ||
+                              doc.custom_fields?.rif ||
+                              '';
+
+                            return (
+                              <tr
+                                key={doc.id}
+                                className="border-b last:border-0 hover:bg-muted/30"
+                              >
+                                {/* Columna 1: Cliente + Icono + ID */}
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-3">
+                                    <FileTypeIcon filename={doc.s3_key} />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate font-semibold text-foreground">
+                                        {clientName || 'Sin Cliente'}
+                                      </p>
+                                      <p className="truncate text-xs text-muted-foreground">
+                                        {clientRif || 'Sin ID / Cédula'}
+                                      </p>
+                                    </div>
+                                  </div>
                                 </td>
-                              ))}
-                              <td className="px-4 py-3 text-muted-foreground">
-                                {new Date(doc.created_at).toLocaleDateString()}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <a
-                                  href={`/api/files/${encodeURIComponent(doc.s3_key ?? '')}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center justify-center rounded-md p-2 hover:bg-muted"
-                                  title="View document"
-                                >
-                                  <Eye className="size-4 text-muted-foreground" />
-                                </a>
-                              </td>
-                            </tr>
-                          ))}
+
+                                {/* Columna 2: Proveedor + RIF */}
+                                <td className="px-4 py-3">
+                                  <div className="min-w-0">
+                                    <p className="truncate font-semibold text-foreground">
+                                      {vendorName || 'Sin Proveedor'}
+                                    </p>
+                                    <p className="truncate text-xs text-muted-foreground">
+                                      {vendorRif || 'Sin RIF'}
+                                    </p>
+                                  </div>
+                                </td>
+
+                                {/* Render de Campos Secundarios */}
+                                {secondaryFields.map((field) => {
+                                  const val = getFieldValue(doc, field);
+                                  const isAmount = field.key === 'totalAmount';
+
+                                  return (
+                                    <td
+                                      key={field.key}
+                                      className={cn(
+                                        'px-4 py-3 truncate',
+                                        isAmount
+                                          ? 'text-right font-semibold text-foreground'
+                                          : 'text-muted-foreground',
+                                      )}
+                                    >
+                                      {val || '-'}
+                                    </td>
+                                  );
+                                })}
+
+                                {/* Fecha de Carga */}
+                                <td className="px-4 py-3 text-xs text-muted-foreground truncate">
+                                  {new Date(
+                                    doc.created_at,
+                                  ).toLocaleDateString()}
+                                </td>
+
+                                {/* Botón Ver */}
+                                <td className="px-4 py-3 text-right">
+                                  <a
+                                    href={`/api/files/${encodeURIComponent(doc.s3_key ?? '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center justify-center rounded-md p-2 hover:bg-muted"
+                                    title="View document"
+                                  >
+                                    <Eye className="size-4 text-muted-foreground" />
+                                  </a>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -527,7 +613,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Indexing dialog: near-full-screen, split panel, dynamic fields */}
+      {/* Indexing dialog */}
       <Dialog
         open={!!indexingDoc}
         onOpenChange={(open) => {
