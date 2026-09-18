@@ -7,16 +7,64 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
 
-    const result = await pool.query(
-      `SELECT * FROM documents WHERE project_id = $1 ORDER BY created_at DESC`,
-      [id]
+    const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
+    const pageSize = Math.min(
+      50,
+      Math.max(1, Number(searchParams.get('pageSize') ?? '10'))
     );
+    const search = searchParams.get('search')?.trim() ?? '';
+    const offset = (page - 1) * pageSize;
 
-    const indexed = result.rows.filter((doc) => doc.status === 'indexed');
-    const pending = result.rows.filter((doc) => doc.status === 'pending');
+    const searchClause = search
+      ? `AND (
+          s3_key ILIKE $3 OR
+          owner ILIKE $3 OR
+          place ILIKE $3 OR
+          custom_fields::text ILIKE $3
+        )`
+      : '';
+    const searchValue = `%${search}%`;
+    const queryParams = search
+      ? [id, pageSize, searchValue, offset]
+      : [id, pageSize, offset];
 
-    return NextResponse.json({ success: true, indexed, pending });
+    // When there's a search term, $4 is the offset; otherwise $3 is.
+    const offsetPlaceholder = search ? '$4' : '$3';
+
+    const dataQuery = `
+      SELECT * FROM documents
+      WHERE project_id = $1 AND status = 'indexed'
+      ${searchClause}
+      ORDER BY created_at DESC
+      LIMIT $2 OFFSET ${offsetPlaceholder}
+    `;
+
+    const countQuery = `
+      SELECT COUNT(*) FROM documents
+      WHERE project_id = $1 AND status = 'indexed'
+      ${searchClause}
+    `;
+    const countParams = search ? [id, searchValue] : [id];
+
+    const [dataResult, countResult, pendingResult] = await Promise.all([
+      pool.query(dataQuery, queryParams),
+      pool.query(countQuery, countParams),
+      pool.query(
+        `SELECT * FROM documents WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC`,
+        [id]
+      ),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      indexed: dataResult.rows,
+      totalIndexed: Number(countResult.rows[0].count),
+      page,
+      pageSize,
+      pending: pendingResult.rows,
+    });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: String(error) },
