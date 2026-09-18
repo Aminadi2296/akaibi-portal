@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
   session.userId = user.id;
   session.email = user.email;
   session.role = user.role;
+  session.name = user.name;
   session.isLoggedIn = true;
   await session.save();
 
