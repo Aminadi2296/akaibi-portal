@@ -3,7 +3,7 @@ import pool from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -12,31 +12,41 @@ export async function GET(
     const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
     const pageSize = Math.min(
       50,
-      Math.max(1, Number(searchParams.get('pageSize') ?? '10'))
+      Math.max(1, Number(searchParams.get('pageSize') ?? '10')),
     );
     const search = searchParams.get('search')?.trim() ?? '';
     const offset = (page - 1) * pageSize;
 
-    const searchClause = search
+    const dataSearchClause = search
       ? `AND (
-          s3_key ILIKE $3 OR
-          owner ILIKE $3 OR
-          place ILIKE $3 OR
-          custom_fields::text ILIKE $3
-        )`
+      s3_key ILIKE $3 OR
+      owner ILIKE $3 OR
+      place ILIKE $3 OR
+      custom_fields::text ILIKE $3
+    )`
       : '';
+
+    const countSearchClause = search
+      ? `AND (
+      s3_key ILIKE $2 OR
+      owner ILIKE $2 OR
+      place ILIKE $2 OR
+      custom_fields::text ILIKE $2
+    )`
+      : '';
+
     const searchValue = `%${search}%`;
     const queryParams = search
       ? [id, pageSize, searchValue, offset]
       : [id, pageSize, offset];
 
-    // When there's a search term, $4 is the offset; otherwise $3 is.
+    // Cuando hay término de búsqueda, $4 es el offset; de lo contrario es $3.
     const offsetPlaceholder = search ? '$4' : '$3';
 
     const dataQuery = `
       SELECT * FROM documents
       WHERE project_id = $1 AND status = 'indexed'
-      ${searchClause}
+      ${dataSearchClause}
       ORDER BY created_at DESC
       LIMIT $2 OFFSET ${offsetPlaceholder}
     `;
@@ -44,7 +54,7 @@ export async function GET(
     const countQuery = `
       SELECT COUNT(*) FROM documents
       WHERE project_id = $1 AND status = 'indexed'
-      ${searchClause}
+      ${countSearchClause}
     `;
     const countParams = search ? [id, searchValue] : [id];
 
@@ -53,7 +63,7 @@ export async function GET(
       pool.query(countQuery, countParams),
       pool.query(
         `SELECT * FROM documents WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC`,
-        [id]
+        [id],
       ),
     ]);
 
@@ -68,7 +78,7 @@ export async function GET(
   } catch (error) {
     return NextResponse.json(
       { success: false, error: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
