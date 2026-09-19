@@ -13,7 +13,11 @@ import { UploadDialog } from '@/components/dashboard/upload-dialog';
 import { IndexingDialog } from '@/components/dashboard/indexing-dialog';
 import { DocumentsTable } from '@/components/dashboard/documents-table';
 import { PendingList } from '@/components/dashboard/pending-list';
-import { getSchemaFor, type ProjectRow, type DocumentRow } from '@/lib/field-schemas';
+import {
+  getSchemaFor,
+  type ProjectRow,
+  type DocumentRow,
+} from '@/lib/field-schemas';
 
 export default function DashboardPage() {
   const [role, setRole] = useState<string | null>(null);
@@ -82,10 +86,20 @@ export default function DashboardPage() {
             </Select>
 
             {canManage && (
-              <UploadDialog projectId={selectedProjectId} onUploaded={refresh} />
+              <UploadDialog
+                projectId={selectedProjectId}
+                onUploaded={refresh}
+              />
             )}
           </div>
         </div>
+
+        {!selectedProject && projects.length === 0 && (
+          <div className="rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground">
+            Aún no tienes proyectos asignados. Por favor, contacta a tu
+            administrador para obtener acceso.
+          </div>
+        )}
 
         {selectedProject && (
           <Tabs defaultValue="all">
