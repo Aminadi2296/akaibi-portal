@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const user = result.rows[0];
 
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
-    return NextResponse.redirect(new URL('/login?error=1', request.url));
+    return NextResponse.redirect(new URL('/login?error=1', request.url), 303);
   }
 
   const session = await getSession();
@@ -25,5 +25,5 @@ export async function POST(request: NextRequest) {
   session.isLoggedIn = true;
   await session.save();
 
-  return NextResponse.redirect(new URL('/dashboard', request.url));
+  return NextResponse.redirect(new URL('/dashboard', request.url), 303);
 }
