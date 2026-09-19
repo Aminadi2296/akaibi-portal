@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSession } from '@/lib/session';
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -11,11 +12,19 @@ const s3 = new S3Client({
 });
 
 export async function POST(request: NextRequest) {
+  const session = await getSession();
+  if (!session.isLoggedIn || session.role === 'client') {
+    return NextResponse.json(
+      { success: false, error: 'Not authorized' },
+      { status: 403 },
+    );
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const projectId = formData.get('projectId') as string;
-    const uploadedBy = 'employee-test';
+    const uploadedBy = session.email ?? 'unknown';
 
     if (!file) {
       return NextResponse.json(
