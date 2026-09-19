@@ -18,9 +18,9 @@ export default function LoginPage({
     <main className="flex min-h-screen items-center justify-center bg-muted">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Employee Login</CardTitle>
+          <CardTitle>Akaibi Portal</CardTitle>
           <CardDescription>
-            Sign in to access the document portal
+            Inicia sesión para acceder a tus proyectos y documentos.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -30,14 +30,14 @@ export default function LoginPage({
               <Input id="email" name="email" type="email" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input id="password" name="password" type="password" required />
             </div>
             {searchParams?.error && (
               <p className="text-sm text-red-500">{searchParams.error}</p>
             )}
             <Button type="submit" className="w-full">
-              Sign In
+              Iniciar sesión
             </Button>
           </form>
         </CardContent>
