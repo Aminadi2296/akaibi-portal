@@ -1,4 +1,5 @@
 import { getSession } from '@/lib/session';
+import Image from 'next/image';
 
 export default async function Nav() {
   const session = await getSession();
@@ -12,7 +13,13 @@ export default async function Nav() {
 
   return (
     <nav className="flex items-center justify-between border-b bg-background px-6 py-3">
-      <span className="font-semibold">Akaibi Portal</span>
+      <Image
+        src="/akaibi-logo.svg"
+        alt="Akaibi Portal"
+        width={128}
+        height={32}
+        className="h-8 w-auto"
+      />
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">

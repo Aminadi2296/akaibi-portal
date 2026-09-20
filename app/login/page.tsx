@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Image from 'next/image';
 import {
   Card,
   CardHeader,
-  CardTitle,
   CardDescription,
   CardContent,
 } from '@/components/ui/card';
@@ -18,7 +18,13 @@ export default function LoginPage({
     <main className="flex min-h-screen items-center justify-center bg-muted">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Akaibi Portal</CardTitle>
+          <Image
+            src="/akaibi-logo.svg"
+            alt="Akaibi Portal"
+            width={128}
+            height={32}
+            className="h-8 w-auto"
+          />
           <CardDescription>
             Inicia sesión para acceder a tus proyectos y documentos.
           </CardDescription>
