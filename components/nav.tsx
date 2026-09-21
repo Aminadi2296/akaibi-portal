@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/session';
 import Image from 'next/image';
+import { LogOut } from 'lucide-react';
 
 export default async function Nav() {
   const session = await getSession();
@@ -34,9 +35,11 @@ export default async function Nav() {
         <form action="/api/logout" method="POST">
           <button
             type="submit"
-            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            title="Log out"
           >
-            Cerrar sesión
+            <LogOut className="size-4" />
+            {/* <span className="hidden sm:inline"></span> */}
           </button>
         </form>
       </div>
