@@ -1,6 +1,7 @@
 'use client';
 
-import { buttonVariants } from '@/components/ui/button';
+import { useState } from 'react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,15 @@ export function ViewDialog({
   schema: FieldDef[];
   onClose: () => void;
 }) {
+  const [showFile, setShowFile] = useState(false);
+
+  // Reset back to the clean info view every time a different document opens
+  const [lastDocId, setLastDocId] = useState<number | null>(null);
+  if (doc && doc.id !== lastDocId) {
+    setLastDocId(doc.id);
+    setShowFile(false);
+  }
+
   return (
     <Dialog
       open={!!doc}
@@ -33,7 +43,7 @@ export function ViewDialog({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="!fixed !inset-0 !top-0 !left-0 flex h-screen w-screen max-w-none !translate-x-0 !translate-y-0 flex-col rounded-none">
+      <DialogContent className="flex h-[90vh] max-w-6xl flex-col">
         <DialogHeader>
           <DialogTitle>Document Details</DialogTitle>
           <DialogDescription title={doc?.s3_key ?? ''}>
@@ -42,42 +52,66 @@ export function ViewDialog({
         </DialogHeader>
 
         <div className="flex flex-1 gap-6 overflow-hidden">
-          <div className="flex-1 overflow-hidden rounded-lg border bg-muted">
-            {doc && <DocumentPreview filename={doc.s3_key} />}
+          {/* File preview panel: width/opacity animate open instead of popping in */}
+          <div
+            className={`overflow-hidden rounded-lg border bg-muted transition-all duration-300 ease-in-out ${
+              showFile ? 'flex-1 opacity-100' : 'w-0 opacity-0'
+            }`}
+          >
+            {doc && showFile && <DocumentPreview filename={doc.s3_key} />}
           </div>
 
-          <div className="w-80 shrink-0 space-y-4 overflow-y-auto">
-            {doc &&
-              schema.map((field) => (
-                <div key={field.key} className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {field.label}
-                  </p>
-                  <p className="text-sm">{getFieldValue(doc, field) || '—'}</p>
-                </div>
-              ))}
-
-            {doc && (
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Uploaded
-                </p>
-                <p className="text-sm">
-                  {new Date(doc.created_at).toLocaleDateString()}
-                </p>
+          {/* Info panel: shrinks to a sidebar once the file is shown */}
+          <div
+            className={`space-y-4 overflow-y-auto transition-all duration-300 ease-in-out ${
+              showFile ? 'w-80 shrink-0' : 'mx-auto w-full max-w-md'
+            }`}
+          >
+            <div className="rounded-lg border p-5">
+              <div className="grid grid-cols-2 gap-4">
+                {doc &&
+                  schema.map((field) => (
+                    <div key={field.key} className="space-y-1">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {field.label}
+                      </p>
+                      <p className="text-sm">
+                        {getFieldValue(doc, field) || '—'}
+                      </p>
+                    </div>
+                  ))}
+                {doc && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Uploaded
+                    </p>
+                    <p className="text-sm">
+                      {new Date(doc.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {doc && (
-              <a
-                href={`/api/files/${encodeURIComponent(doc.s3_key ?? '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            <div className="flex gap-2">
+              <Button
+                variant={showFile ? 'outline' : 'default'}
+                className="flex-1"
+                onClick={() => setShowFile((v) => !v)}
               >
-                Open in new tab
-              </a>
-            )}
+                {showFile ? 'Hide file' : 'View file'}
+              </Button>
+              {doc && (
+                <a
+                  href={`/api/files/${encodeURIComponent(doc.s3_key ?? '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={buttonVariants({ variant: 'outline' })}
+                >
+                  Open in new tab
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
