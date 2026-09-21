@@ -106,8 +106,10 @@ export default function DashboardPage() {
         {selectedProject && (
           <Tabs defaultValue="all">
             <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              {canManage && <TabsTrigger value="pending">Pending</TabsTrigger>}
+              <TabsTrigger value="all">Documentos</TabsTrigger>
+              {canManage && (
+                <TabsTrigger value="pending">Indexación</TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="all">
