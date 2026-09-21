@@ -83,7 +83,7 @@ export function DocumentsTable({
           <div className="relative">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search..."
+              placeholder="Buscar..."
               className="pl-9"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -93,10 +93,10 @@ export function DocumentsTable({
 
         <CardContent className="p-0">
           {loading ? (
-            <p className="p-6 text-sm text-muted-foreground">Loading...</p>
+            <p className="p-6 text-sm text-muted-foreground">Cargando...</p>
           ) : documents.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground">
-              No documents match.
+              No hay documentos que coincidan.
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -104,7 +104,7 @@ export function DocumentsTable({
                 <thead>
                   <tr className="border-b bg-muted/40 text-left text-muted-foreground">
                     <th className="w-[200px] px-4 py-3 font-medium">
-                      Document
+                      Documento
                     </th>
                     {schema.map((field) => (
                       <th
@@ -114,11 +114,9 @@ export function DocumentsTable({
                         {field.label}
                       </th>
                     ))}
-                    <th className="w-[100px] px-4 py-3 font-medium">
-                      Uploaded
-                    </th>
+                    <th className="w-[100px] px-4 py-3 font-medium">Subido</th>
                     <th className="w-[60px] px-4 py-3 text-right font-medium">
-                      See
+                      Ver
                     </th>
                   </tr>
                 </thead>
@@ -171,8 +169,8 @@ export function DocumentsTable({
         <div className="flex items-center justify-between border-t p-4">
           <span className="text-sm text-muted-foreground">
             {total === 0
-              ? 'No results'
-              : `Page ${page} of ${totalPages} · ${total} total`}
+              ? 'Sin resultados'
+              : `Página ${page} de ${totalPages} · ${total} en total`}
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -182,7 +180,7 @@ export function DocumentsTable({
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               <ChevronLeft className="size-4" />
-              Previous
+              Anterior
             </Button>
             <Button
               variant="outline"
@@ -190,7 +188,7 @@ export function DocumentsTable({
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
-              Next
+              Siguiente
               <ChevronRight className="size-4" />
             </Button>
           </div>

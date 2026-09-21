@@ -45,7 +45,7 @@ export function ViewDialog({
     >
       <DialogContent className="flex h-[90vh] max-w-6xl flex-col">
         <DialogHeader>
-          <DialogTitle>Document Details</DialogTitle>
+          <DialogTitle>Detalles del documento</DialogTitle>
           <DialogDescription title={doc?.s3_key ?? ''}>
             {doc?.s3_key} · {projectName}
           </DialogDescription>
@@ -83,7 +83,7 @@ export function ViewDialog({
                 {doc && (
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-muted-foreground">
-                      Uploaded
+                      Subido
                     </p>
                     <p className="text-sm">
                       {new Date(doc.created_at).toLocaleDateString()}
@@ -99,7 +99,7 @@ export function ViewDialog({
                 className="flex-1"
                 onClick={() => setShowFile((v) => !v)}
               >
-                {showFile ? 'Hide file' : 'View file'}
+                {showFile ? 'Ocultar archivo' : 'Ver archivo'}
               </Button>
               {doc && (
                 <a
@@ -108,7 +108,7 @@ export function ViewDialog({
                   rel="noopener noreferrer"
                   className={buttonVariants({ variant: 'outline' })}
                 >
-                  Open in new tab
+                  Abrir en pestaña nueva
                 </a>
               )}
             </div>

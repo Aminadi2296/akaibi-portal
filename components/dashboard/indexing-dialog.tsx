@@ -78,7 +78,7 @@ export function IndexingDialog({
     >
       <DialogContent className="!fixed !inset-0 !top-0 !left-0 flex h-screen w-screen max-w-none !translate-x-0 !translate-y-0 flex-col rounded-none">
         <DialogHeader>
-          <DialogTitle>Index Document</DialogTitle>
+          <DialogTitle>Indexar documento</DialogTitle>
           <DialogDescription title={doc?.s3_key ?? ''}>
             {doc?.s3_key} · {projectName}
           </DialogDescription>
@@ -115,10 +115,10 @@ export function IndexingDialog({
             className={buttonVariants({ variant: 'outline' })}
             type="button"
           >
-            Cancel
+            Cancelar
           </DialogClose>
           <Button onClick={submit} disabled={submitting}>
-            {submitting ? 'Saving...' : 'Save & Mark Indexed'}
+            {submitting ? 'Guardando...' : 'Guardar y marcar como indexado'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -61,12 +61,12 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold">
-              {selectedProject ? selectedProject.company_name : 'Documents'}
+              {selectedProject ? selectedProject.company_name : 'Documentos'}
             </h1>
             <p className="text-sm text-muted-foreground">
               {selectedProject
                 ? selectedProject.name
-                : 'Select a project to get started'}
+                : 'Selecciona un proyecto para comenzar'}
             </p>
           </div>
 
@@ -76,7 +76,7 @@ export default function DashboardPage() {
               onValueChange={(value) => setSelectedProjectId(value as string)}
             >
               <SelectTrigger className="w-56">
-                <SelectValue placeholder="Select a project" />
+                <SelectValue placeholder="Selecciona un proyecto" />
               </SelectTrigger>
               <SelectContent>
                 {projects.map((p) => (

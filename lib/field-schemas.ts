@@ -32,21 +32,41 @@ export type FieldDef = {
 
 export const FIELD_SCHEMAS: Record<string, FieldDef[]> = {
   medical: [
-    { key: 'owner', label: 'Owner', type: 'text', mapsTo: 'owner' },
-    { key: 'date_recorded', label: 'Date', type: 'date', mapsTo: 'date_recorded' },
-    { key: 'place', label: 'Place', type: 'text', mapsTo: 'place' },
+    { key: 'owner', label: 'Propietario', type: 'text', mapsTo: 'owner' },
+    {
+      key: 'date_recorded',
+      label: 'Fecha',
+      type: 'date',
+      mapsTo: 'date_recorded',
+    },
+    { key: 'place', label: 'Lugar', type: 'text', mapsTo: 'place' },
   ],
   contract: [
-    { key: 'owner', label: 'Owner', type: 'text', mapsTo: 'owner' },
-    { key: 'date_recorded', label: 'Date', type: 'date', mapsTo: 'date_recorded' },
-    { key: 'place', label: 'Place', type: 'text', mapsTo: 'place' },
+    { key: 'owner', label: 'Propietario', type: 'text', mapsTo: 'owner' },
+    {
+      key: 'date_recorded',
+      label: 'Fecha',
+      type: 'date',
+      mapsTo: 'date_recorded',
+    },
+    { key: 'place', label: 'Lugar', type: 'text', mapsTo: 'place' },
   ],
   invoice: [
-    { key: 'invoiceNumber', label: 'Invoice #', type: 'text' },
-    { key: 'controlNumber', label: 'Control #', type: 'text' },
+    { key: 'invoiceNumber', label: 'Número de factura', type: 'text' },
+    { key: 'controlNumber', label: 'Número de control', type: 'text' },
     { key: 'rif', label: 'RIF', type: 'text' },
-    { key: 'clientName', label: 'Client Name', type: 'text', mapsTo: 'owner' },
-    { key: 'date_recorded', label: 'Date', type: 'date', mapsTo: 'date_recorded' },
+    {
+      key: 'clientName',
+      label: 'Nombre del cliente',
+      type: 'text',
+      mapsTo: 'owner',
+    },
+    {
+      key: 'date_recorded',
+      label: 'Fecha',
+      type: 'date',
+      mapsTo: 'date_recorded',
+    },
     { key: 'totalAmount', label: 'Total (Bs.)', type: 'text' },
   ],
 };

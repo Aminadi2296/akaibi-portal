@@ -29,7 +29,9 @@ export function PendingList({
   const load = useCallback(async () => {
     if (!projectId) return;
     setLoading(true);
-    const res = await fetch(`/api/projects/${projectId}/documents?page=1&pageSize=1`);
+    const res = await fetch(
+      `/api/projects/${projectId}/documents?page=1&pageSize=1`,
+    );
     const data = await res.json();
     if (data.success) {
       setPending(data.pending);
@@ -44,17 +46,17 @@ export function PendingList({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pending Indexing</CardTitle>
+        <CardTitle>Pendientes de indexación</CardTitle>
         <CardDescription>
-          Any employee can pick one up and index it.
+          Cualquier empleado puede tomar uno y indexarlo.
         </CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">Cargando...</p>
         ) : pending.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nothing waiting to be indexed.
+            No hay documentos pendientes por indexar.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -78,7 +80,7 @@ export function PendingList({
                     variant="outline"
                     onClick={() => onIndexClick(doc)}
                   >
-                    Index this document
+                    Indexar este documento
                   </Button>
                 )}
               </li>

@@ -36,7 +36,7 @@ export default async function Nav() {
           <button
             type="submit"
             className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-            title="Log out"
+            title="Cerrar sesión"
           >
             <LogOut className="size-4" />
             {/* <span className="hidden sm:inline"></span> */}

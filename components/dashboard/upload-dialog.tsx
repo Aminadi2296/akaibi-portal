@@ -56,18 +56,18 @@ export function UploadDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <Button onClick={() => setOpen(true)}>
         <UploadIcon className="size-4" />
-        Upload
+        Subir
       </Button>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Upload a New File</DialogTitle>
+          <DialogTitle>Subir un archivo nuevo</DialogTitle>
           <DialogDescription>
-            It will appear under &quot;Pending&quot; until indexed.
+            Aparecerá en &quot;Pendientes&quot; hasta que se indexe.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="file">File</Label>
+            <Label htmlFor="file">Archivo</Label>
             <Input
               id="file"
               type="file"
@@ -81,10 +81,10 @@ export function UploadDialog({
               className={buttonVariants({ variant: 'outline' })}
               type="button"
             >
-              Cancel
+              Cancelar
             </DialogClose>
             <Button type="submit" disabled={uploading}>
-              {uploading ? 'Uploading...' : 'Upload'}
+              {uploading ? 'Subiendo...' : 'Subir'}
             </Button>
           </DialogFooter>
         </form>

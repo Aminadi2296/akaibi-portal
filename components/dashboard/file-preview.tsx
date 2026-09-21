@@ -1,4 +1,9 @@
-import { FileText, FileSpreadsheet, Image as ImageIcon, File as FileIcon } from 'lucide-react';
+import {
+  FileText,
+  FileSpreadsheet,
+  Image as ImageIcon,
+  File as FileIcon,
+} from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +27,7 @@ export function DocumentPreview({ filename }: { filename: string | null }) {
   if (!filename) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        No file
+        No hay archivo
       </div>
     );
   }
@@ -46,14 +51,14 @@ export function DocumentPreview({ filename }: { filename: string | null }) {
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-      <span>Preview not available for this file type.</span>
+      <span>La vista previa no está disponible para este tipo de archivo.</span>
       <a
         href={fileUrl}
         target="_blank"
         rel="noopener noreferrer"
         className={buttonVariants({ variant: 'outline', size: 'sm' })}
       >
-        Open in new tab
+        Abrir en pestaña nueva
       </a>
     </div>
   );
