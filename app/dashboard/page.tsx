@@ -60,10 +60,12 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold">Documents</h1>
+            <h1 className="text-2xl font-semibold">
+              {selectedProject ? selectedProject.company_name : 'Documents'}
+            </h1>
             <p className="text-sm text-muted-foreground">
               {selectedProject
-                ? `${selectedProject.name} · ${selectedProject.company_name}`
+                ? selectedProject.name
                 : 'Select a project to get started'}
             </p>
           </div>
