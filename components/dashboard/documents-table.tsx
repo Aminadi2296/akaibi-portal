@@ -19,10 +19,12 @@ export function DocumentsTable({
   projectId,
   schema,
   refreshKey,
+  userRole,
 }: {
   projectId: string;
   schema: FieldDef[];
   refreshKey: number;
+  userRole: string | undefined;
 }) {
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -198,7 +200,9 @@ export function DocumentsTable({
         doc={viewingDoc}
         projectName={undefined}
         schema={schema}
+        userRole={userRole}
         onClose={() => setViewingDoc(null)}
+        onDeleted={load}
       />
     </>
   );

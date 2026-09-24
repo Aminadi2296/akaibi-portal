@@ -16,7 +16,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await getSession();
-  if (!session.isLoggedIn || session.role === 'client') {
+  if (!session.isLoggedIn || session.role !== 'admin') {
     return NextResponse.json(
       { success: false, error: 'Not authorized' },
       { status: 403 },

@@ -9,6 +9,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { DocumentPreview } from './file-preview';
 import {
   getFieldValue,
@@ -20,20 +31,46 @@ export function ViewDialog({
   doc,
   projectName,
   schema,
+  userRole,
   onClose,
+  onDeleted,
 }: {
   doc: DocumentRow | null;
   projectName: string | undefined;
   schema: FieldDef[];
+  userRole: string | undefined;
   onClose: () => void;
+  onDeleted?: () => void;
 }) {
   const [showFile, setShowFile] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Reset back to the clean info view every time a different document opens
   const [lastDocId, setLastDocId] = useState<number | null>(null);
   if (doc && doc.id !== lastDocId) {
     setLastDocId(doc.id);
     setShowFile(false);
+  }
+
+  async function handleDelete() {
+    if (!doc) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/documents/${doc.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error ?? 'No se pudo eliminar el documento');
+      }
+      onDeleted?.();
+      onClose();
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert('No se pudo eliminar el documento. Intenta de nuevo.');
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -112,6 +149,39 @@ export function ViewDialog({
                 </a>
               )}
             </div>
+
+            {doc && userRole === 'admin' && (
+              <AlertDialog>
+                <AlertDialogTrigger
+                  className={buttonVariants({
+                    variant: 'destructive',
+                    className: 'w-full',
+                  })}
+                >
+                  Eliminar documento
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar este documento?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción eliminará permanentemente el archivo y sus
+                      datos indexados. Esta acción no se puede deshacer.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleting}>
+                      Cancelar
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      {deleting ? 'Eliminando…' : 'Eliminar'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
       </DialogContent>

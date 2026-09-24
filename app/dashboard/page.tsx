@@ -117,6 +117,7 @@ export default function DashboardPage() {
                 projectId={selectedProjectId}
                 schema={activeSchema}
                 refreshKey={refreshKey}
+                userRole={role ?? undefined}
               />
             </TabsContent>
 
