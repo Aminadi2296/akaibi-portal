@@ -46,7 +46,13 @@ export function DocumentPreview({ filename }: { filename: string | null }) {
   }
 
   if (ext === 'pdf') {
-    return <iframe src={fileUrl} className="h-full w-full" title={filename} />;
+    return (
+      <iframe
+        src={`${fileUrl}#toolbar=0`}
+        className="h-full w-full"
+        title={filename}
+      />
+    );
   }
 
   return (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
@@ -82,7 +83,41 @@ export function ViewDialog({
     >
       <DialogContent className="flex h-[90vh] max-w-6xl flex-col">
         <DialogHeader>
-          <DialogTitle>Detalles del documento</DialogTitle>
+          <div className="flex items-center justify-between pr-6">
+            <DialogTitle>Detalles del documento</DialogTitle>
+            {doc && userRole === 'admin' && (
+              <AlertDialog>
+                <AlertDialogTrigger
+                  className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  title="Eliminar documento"
+                >
+                  <Trash2 className="size-4" />
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      ¿Eliminar este documento?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción eliminará permanentemente el archivo y sus
+                      datos indexados. Esta acción no se puede deshacer.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleting}>
+                      Cancelar
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      {deleting ? 'Eliminando…' : 'Eliminar'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
           <DialogDescription title={doc?.s3_key ?? ''}>
             {doc?.s3_key} · {projectName}
           </DialogDescription>
@@ -108,7 +143,7 @@ export function ViewDialog({
               <div className="grid grid-cols-2 gap-4">
                 {doc &&
                   schema.map((field) => (
-                    <div key={field.key} className="space-y-1">
+                    <div key={field.key}>
                       <p className="text-xs font-medium text-muted-foreground">
                         {field.label}
                       </p>
@@ -149,39 +184,6 @@ export function ViewDialog({
                 </a>
               )}
             </div>
-
-            {doc && userRole === 'admin' && (
-              <AlertDialog>
-                <AlertDialogTrigger
-                  className={buttonVariants({
-                    variant: 'destructive',
-                    className: 'w-full',
-                  })}
-                >
-                  Eliminar documento
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Eliminar este documento?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta acción eliminará permanentemente el archivo y sus
-                      datos indexados. Esta acción no se puede deshacer.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={deleting}>
-                      Cancelar
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      disabled={deleting}
-                    >
-                      {deleting ? 'Eliminando…' : 'Eliminar'}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
           </div>
         </div>
       </DialogContent>
