@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const projectId = formData.get('projectId') as string;
-    const uploadedBy = session.email ?? 'unknown';
+    const uploadedBy = session.userId;
 
     if (!file) {
       return NextResponse.json(
