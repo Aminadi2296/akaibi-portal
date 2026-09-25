@@ -8,7 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { FileTypeIcon } from './file-preview';
 import { ViewDialog } from './view-dialog';
 import {
-  getFieldValue,
+  getValueByKey,
+  getTableColumnsFor,
   type DocumentRow,
   type FieldDef,
 } from '@/lib/field-schemas';
@@ -17,11 +18,13 @@ const PAGE_SIZE = 5;
 
 export function DocumentsTable({
   projectId,
+  projectType,
   schema,
   refreshKey,
   userRole,
 }: {
   projectId: string;
+  projectType: string | undefined;
   schema: FieldDef[];
   refreshKey: number;
   userRole: string | undefined;
@@ -34,6 +37,7 @@ export function DocumentsTable({
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [viewingDoc, setViewingDoc] = useState<DocumentRow | null>(null);
+
   // Debounce the search box so we don't hit the database on every keystroke
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -77,6 +81,7 @@ export function DocumentsTable({
   }, [load, refreshKey]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const columns = getTableColumnsFor(projectType);
 
   return (
     <>
@@ -105,18 +110,14 @@ export function DocumentsTable({
               <table className="w-full table-fixed text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40 text-left text-muted-foreground">
-                    <th className="w-[200px] px-4 py-3 font-medium">
-                      Documento
-                    </th>
-                    {schema.map((field) => (
+                    {columns.map((col, i) => (
                       <th
-                        key={field.key}
-                        className="w-[140px] px-4 py-3 font-medium"
+                        key={i}
+                        className={`${col.width ?? 'w-[140px]'} px-4 py-3 font-medium`}
                       >
-                        {field.label}
+                        {col.label}
                       </th>
                     ))}
-                    <th className="w-[100px] px-4 py-3 font-medium">Subido</th>
                     <th className="w-[60px] px-4 py-3 text-right font-medium">
                       Ver
                     </th>
@@ -129,25 +130,50 @@ export function DocumentsTable({
                       className="cursor-pointer border-b last:border-0 hover:bg-muted/30"
                       onClick={() => setViewingDoc(doc)}
                     >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <FileTypeIcon filename={doc.s3_key} />
-                          <span
-                            className="truncate font-medium"
-                            title={doc.s3_key ?? ''}
-                          >
-                            {doc.s3_key}
-                          </span>
-                        </div>
-                      </td>
-                      {schema.map((field) => (
-                        <td key={field.key} className="break-words px-4 py-3">
-                          {getFieldValue(doc, field)}
-                        </td>
-                      ))}
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {new Date(doc.created_at).toLocaleDateString()}
-                      </td>
+                      {columns.map((col, i) => {
+                        const mainValue =
+                          col.type === 'stacked'
+                            ? getValueByKey(doc, col.mainKey, schema)
+                            : getValueByKey(doc, col.key, schema);
+
+                        return (
+                          <td key={i} className="break-words px-4 py-3">
+                            {col.type === 'stacked' ? (
+                              <div className="flex items-center gap-3">
+                                {col.icon && (
+                                  <FileTypeIcon filename={doc.s3_key} />
+                                )}
+                                <div className="flex min-w-0 flex-col">
+                                  <span
+                                    className="truncate font-medium"
+                                    title={mainValue}
+                                  >
+                                    {mainValue || '—'}
+                                  </span>
+                                  <span
+                                    className="truncate text-xs text-muted-foreground"
+                                    title={getValueByKey(doc, col.subKey, schema)}
+                                  >
+                                    {getValueByKey(doc, col.subKey, schema)}
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-3">
+                                {col.icon && (
+                                  <FileTypeIcon filename={doc.s3_key} />
+                                )}
+                                <span
+                                  className="truncate"
+                                  title={mainValue}
+                                >
+                                  {mainValue || '—'}
+                                </span>
+                              </div>
+                            )}
+                          </td>
+                        );
+                      })}
                       <td className="px-4 py-3 text-right">
                         <a
                           href={`/api/files/${encodeURIComponent(doc.s3_key ?? '')}`}

@@ -118,7 +118,7 @@ export function IndexingDialog({
             Cancelar
           </DialogClose>
           <Button onClick={submit} disabled={submitting}>
-            {submitting ? 'Guardando...' : 'Guardar y marcar como indexado'}
+            {submitting ? 'Guardando...' : 'Guardar'}
           </Button>
         </DialogFooter>
       </DialogContent>

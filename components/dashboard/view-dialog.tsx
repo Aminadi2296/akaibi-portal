@@ -143,7 +143,10 @@ export function ViewDialog({
               <div className="grid grid-cols-2 gap-4">
                 {doc &&
                   schema.map((field) => (
-                    <div key={field.key}>
+                    <div
+                      key={field.key}
+                      className={`space-y-1 ${field.fullWidth ? 'col-span-2' : ''}`}
+                    >
                       <p className="text-xs font-medium text-muted-foreground">
                         {field.label}
                       </p>

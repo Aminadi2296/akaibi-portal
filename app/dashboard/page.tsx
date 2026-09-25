@@ -115,6 +115,7 @@ export default function DashboardPage() {
             <TabsContent value="all">
               <DocumentsTable
                 projectId={selectedProjectId}
+                projectType={selectedProject?.project_type}
                 schema={activeSchema}
                 refreshKey={refreshKey}
                 userRole={role ?? undefined}
