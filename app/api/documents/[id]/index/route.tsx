@@ -17,7 +17,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { owner, dateRecorded, place, customFields } = body;
+    const { owner, dateRecorded, place, customFields, documentType } = body;
 
     const result = await pool.query(
       `UPDATE documents
@@ -27,8 +27,9 @@ export async function PATCH(
            custom_fields = $4,
            status = 'indexed',
            indexed_by = $5,
-           indexed_at = NOW()
-       WHERE id = $6
+           indexed_at = NOW(),
+           document_type = $6
+       WHERE id = $7
        RETURNING *`,
       [
         owner ?? null,
@@ -36,6 +37,7 @@ export async function PATCH(
         place ?? null,
         JSON.stringify(customFields ?? {}),
         session.userId,
+        documentType ?? null,
         id,
       ],
     );

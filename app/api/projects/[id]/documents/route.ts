@@ -15,57 +15,63 @@ export async function GET(
       Math.max(1, Number(searchParams.get('pageSize') ?? '10')),
     );
     const search = searchParams.get('search')?.trim() ?? '';
+    const documentType = searchParams.get('documentType')?.trim() ?? '';
     const offset = (page - 1) * pageSize;
 
-    const dataSearchClause = search
-      ? `AND (
-      s3_key ILIKE $3 OR
-      owner ILIKE $3 OR
-      place ILIKE $3 OR
-      custom_fields::text ILIKE $3
-    )`
-      : '';
+    // Build the shared WHERE clause + params dynamically so extra optional
+    // filters (search, documentType, more later) don't require manually
+    // renumbering $N placeholders by hand.
+    const conditions: string[] = ['project_id = $1', `status = 'indexed'`];
+    const baseParams: (string | number)[] = [id];
 
-    const countSearchClause = search
-      ? `AND (
-      s3_key ILIKE $2 OR
-      owner ILIKE $2 OR
-      place ILIKE $2 OR
-      custom_fields::text ILIKE $2
-    )`
-      : '';
+    if (search) {
+      baseParams.push(`%${search}%`);
+      const idx = baseParams.length;
+      conditions.push(`(
+        s3_key ILIKE $${idx} OR
+        owner ILIKE $${idx} OR
+        place ILIKE $${idx} OR
+        custom_fields::text ILIKE $${idx}
+      )`);
+    }
 
-    const searchValue = `%${search}%`;
-    const queryParams = search
-      ? [id, pageSize, searchValue, offset]
-      : [id, pageSize, offset];
+    if (documentType) {
+      baseParams.push(documentType);
+      conditions.push(`document_type = $${baseParams.length}`);
+    }
 
-    // Cuando hay término de búsqueda, $4 es el offset; de lo contrario es $3.
-    const offsetPlaceholder = search ? '$4' : '$3';
+    const whereClause = conditions.join(' AND ');
 
+    const dataParams = [...baseParams, pageSize, offset];
     const dataQuery = `
       SELECT * FROM documents
-      WHERE project_id = $1 AND status = 'indexed'
-      ${dataSearchClause}
+      WHERE ${whereClause}
       ORDER BY created_at DESC
-      LIMIT $2 OFFSET ${offsetPlaceholder}
+      LIMIT $${baseParams.length + 1} OFFSET $${baseParams.length + 2}
     `;
 
     const countQuery = `
       SELECT COUNT(*) FROM documents
-      WHERE project_id = $1 AND status = 'indexed'
-      ${countSearchClause}
+      WHERE ${whereClause}
     `;
-    const countParams = search ? [id, searchValue] : [id];
 
-    const [dataResult, countResult, pendingResult] = await Promise.all([
-      pool.query(dataQuery, queryParams),
-      pool.query(countQuery, countParams),
-      pool.query(
-        `SELECT * FROM documents WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC`,
-        [id],
-      ),
-    ]);
+    const [dataResult, countResult, pendingResult, typesResult] =
+      await Promise.all([
+        pool.query(dataQuery, dataParams),
+        pool.query(countQuery, baseParams),
+        pool.query(
+          `SELECT * FROM documents WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC`,
+          [id],
+        ),
+        // Distinct document types actually present in this project's
+        // indexed documents, to populate the type filter dropdown.
+        pool.query(
+          `SELECT DISTINCT document_type FROM documents
+           WHERE project_id = $1 AND status = 'indexed' AND document_type IS NOT NULL
+           ORDER BY document_type`,
+          [id],
+        ),
+      ]);
 
     return NextResponse.json({
       success: true,
@@ -74,6 +80,7 @@ export async function GET(
       page,
       pageSize,
       pending: pendingResult.rows,
+      availableDocumentTypes: typesResult.rows.map((r) => r.document_type),
     });
   } catch (error) {
     return NextResponse.json(
@@ -82,3 +89,4 @@ export async function GET(
     );
   }
 }
+

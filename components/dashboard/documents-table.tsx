@@ -5,16 +5,47 @@ import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { FileTypeIcon } from './file-preview';
 import { ViewDialog } from './view-dialog';
 import {
   getValueByKey,
   getTableColumnsFor,
+  getTableColumnsForType,
+  getDocumentTypeLabel,
   type DocumentRow,
   type FieldDef,
 } from '@/lib/field-schemas';
 
 const PAGE_SIZE = 5;
+
+const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
+
+function isImageFile(filename: string | null): boolean {
+  const ext = filename?.split('.').pop()?.toLowerCase() ?? '';
+  return IMAGE_EXTENSIONS.includes(ext);
+}
+
+// Shows a small square thumbnail for image files (photos), falling back to
+// the generic FileTypeIcon for everything else (PDFs, docs, etc.).
+function FileThumbnail({ filename }: { filename: string | null }) {
+  if (filename && isImageFile(filename)) {
+    return (
+      <img
+        src={`/api/files/${encodeURIComponent(filename)}`}
+        alt=""
+        className="size-9 shrink-0 rounded object-cover"
+      />
+    );
+  }
+  return <FileTypeIcon filename={filename} />;
+}
 
 export function DocumentsTable({
   projectId,
@@ -38,6 +69,12 @@ export function DocumentsTable({
   const [page, setPage] = useState(1);
   const [viewingDoc, setViewingDoc] = useState<DocumentRow | null>(null);
 
+  // Type filter: only meaningful for projects that hold a mix of document
+  // types (project_type === 'mixed'). 'all' means no filter applied.
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
+  const isMixed = projectType === 'mixed';
+
   // Debounce the search box so we don't hit the database on every keystroke
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -47,12 +84,13 @@ export function DocumentsTable({
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-  // Reset to page 1 and clear search whenever the project changes
+  // Reset to page 1 and clear search/filter whenever the project changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
     setSearch('');
     setSearchInput('');
+    setTypeFilter('all');
   }, [projectId]);
 
   const load = useCallback(async () => {
@@ -63,6 +101,9 @@ export function DocumentsTable({
       pageSize: String(PAGE_SIZE),
     });
     if (search) params.set('search', search);
+    if (isMixed && typeFilter !== 'all') {
+      params.set('documentType', typeFilter);
+    }
 
     const res = await fetch(
       `/api/projects/${projectId}/documents?${params.toString()}`,
@@ -71,9 +112,12 @@ export function DocumentsTable({
     if (data.success) {
       setDocuments(data.indexed);
       setTotal(data.totalIndexed);
+      if (Array.isArray(data.availableDocumentTypes)) {
+        setAvailableTypes(data.availableDocumentTypes);
+      }
     }
     setLoading(false);
-  }, [projectId, page, search]);
+  }, [projectId, page, search, isMixed, typeFilter]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -81,13 +125,20 @@ export function DocumentsTable({
   }, [load, refreshKey]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const columns = getTableColumnsFor(projectType);
+
+  // For mixed projects, columns follow the selected type filter (falling
+  // back to a generic default when "Todos" is selected, since documents of
+  // different types don't share one column layout). For single-type
+  // projects, columns come from the project's own type as before.
+  const columns = isMixed
+    ? getTableColumnsForType(typeFilter !== 'all' ? typeFilter : undefined)
+    : getTableColumnsFor(projectType);
 
   return (
     <>
       <Card className="overflow-hidden py-0">
-        <div className="border-b p-4">
-          <div className="relative">
+        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar..."
@@ -96,6 +147,28 @@ export function DocumentsTable({
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
+
+          {isMixed && (
+            <Select
+              value={typeFilter}
+              onValueChange={(value) => {
+                setTypeFilter(value as string);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Tipo de documento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los tipos</SelectItem>
+                {availableTypes.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {getDocumentTypeLabel(t)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <CardContent className="p-0">
@@ -141,7 +214,7 @@ export function DocumentsTable({
                             {col.type === 'stacked' ? (
                               <div className="flex items-center gap-3">
                                 {col.icon && (
-                                  <FileTypeIcon filename={doc.s3_key} />
+                                  <FileThumbnail filename={doc.s3_key} />
                                 )}
                                 <div className="flex min-w-0 flex-col">
                                   <span
@@ -161,7 +234,7 @@ export function DocumentsTable({
                             ) : (
                               <div className="flex items-center gap-3">
                                 {col.icon && (
-                                  <FileTypeIcon filename={doc.s3_key} />
+                                  <FileThumbnail filename={doc.s3_key} />
                                 )}
                                 <span
                                   className="truncate"

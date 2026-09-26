@@ -140,6 +140,7 @@ export default function DashboardPage() {
         doc={indexingDoc}
         projectName={selectedProject?.name}
         schema={activeSchema}
+        allowTypePicker={selectedProject?.project_type === 'mixed'}
         onClose={() => setIndexingDoc(null)}
         onIndexed={() => {
           setIndexingDoc(null);

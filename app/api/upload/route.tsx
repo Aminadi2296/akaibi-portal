@@ -11,6 +11,12 @@ const s3 = new S3Client({
   },
 });
 
+// Free-tier cap: total documents (pending + indexed) a company can have
+// across all of its projects. Checked before every upload. Once a real
+// paid-plan concept exists, this should read from a per-company plan field
+// instead of a single hardcoded constant.
+const FREE_TIER_DOCUMENT_LIMIT = 50;
+
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session.isLoggedIn || session.role === 'client') {
@@ -30,6 +36,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'No file provided' },
         { status: 400 },
+      );
+    }
+
+    // Check the company's total document count before touching S3, so a
+    // rejected upload never costs storage or an API call.
+    const countResult = await pool.query(
+      `SELECT COUNT(d.id)::int AS total
+       FROM documents d
+       JOIN projects p ON d.project_id = p.id
+       WHERE p.company_id = (
+         SELECT company_id FROM projects WHERE id = $1
+       )`,
+      [projectId],
+    );
+    const currentCount = countResult.rows[0]?.total ?? 0;
+
+    if (currentCount >= FREE_TIER_DOCUMENT_LIMIT) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Se alcanzó el límite de ${FREE_TIER_DOCUMENT_LIMIT} documentos del plan gratuito.`,
+        },
+        { status: 403 },
       );
     }
 
@@ -63,3 +92,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
