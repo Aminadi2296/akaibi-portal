@@ -71,21 +71,27 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Select
-              value={selectedProjectId}
-              onValueChange={(value) => setSelectedProjectId(value as string)}
-            >
-              <SelectTrigger className="w-56">
-                <SelectValue placeholder="Selecciona un proyecto" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((p) => (
-                  <SelectItem key={p.id} value={String(p.id)}>
-                    {p.name} ({p.company_name})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {projects.length > 1 ? (
+              <Select
+                value={selectedProjectId}
+                onValueChange={(value) => setSelectedProjectId(value as string)}
+              >
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="Selecciona un proyecto">
+                    {selectedProject
+                      ? `${selectedProject.name} (${selectedProject.company_name})`
+                      : undefined}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.name} ({p.company_name})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
 
             {canManage && (
               <UploadDialog
