@@ -74,7 +74,9 @@ export function IndexingDialog({
     let owner: string | null = null;
     let dateRecorded: string | null = null;
     let place: string | null = null;
-    const customFields: Record<string, string> = {};
+    const customFields: Record<string, string> = {
+      ...(doc.custom_fields ?? {}),
+    };
 
     for (const field of effectiveSchema) {
       const value = values[field.key] ?? '';

@@ -165,6 +165,16 @@ export function ViewDialog({
                     </p>
                   </div>
                 )}
+                {doc?.custom_fields?.relativePath && (
+                  <div className="space-y-1 col-span-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Carpeta / Ruta original
+                    </p>
+                    <p className="text-xs font-mono text-muted-foreground break-all">
+                      {doc.custom_fields.relativePath}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

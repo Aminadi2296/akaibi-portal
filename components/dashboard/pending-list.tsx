@@ -87,14 +87,24 @@ export function PendingList({
                   key={doc.id}
                   className="flex items-center justify-between rounded-lg border p-3"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <FileTypeIcon filename={doc.s3_key} />
-                    <span
-                      className="max-w-[280px] truncate text-sm"
-                      title={doc.s3_key ?? ''}
-                    >
-                      {doc.s3_key}
-                    </span>
+                    <div className="flex flex-col min-w-0">
+                      <span
+                        className="max-w-[280px] truncate text-sm font-medium"
+                        title={doc.s3_key ?? ''}
+                      >
+                        {doc.s3_key}
+                      </span>
+                      {doc.custom_fields?.relativePath && (
+                        <span
+                          className="max-w-[280px] truncate text-xs text-muted-foreground"
+                          title={doc.custom_fields.relativePath}
+                        >
+                          Carpeta: {doc.custom_fields.relativePath}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {canIndex && (
                     <div className="flex gap-2">

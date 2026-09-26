@@ -62,8 +62,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const relativePath = (formData.get('relativePath') as string) || null;
+
     const timestamp = Date.now();
-    const safeFileName = `${timestamp}-${file.name}`;
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const safeFileName = `${timestamp}-${randomSuffix}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -73,15 +76,17 @@ export async function POST(request: NextRequest) {
         Bucket: process.env.AWS_S3_BUCKET,
         Key: safeFileName,
         Body: buffer,
-        ContentType: file.type,
+        ContentType: file.type || 'application/octet-stream',
       }),
     );
 
+    const customFields = relativePath ? { relativePath } : {};
+
     const result = await pool.query(
-      `INSERT INTO documents (project_id, s3_key, uploaded_by, status)
-       VALUES ($1, $2, $3, 'pending')
+      `INSERT INTO documents (project_id, s3_key, uploaded_by, status, custom_fields)
+       VALUES ($1, $2, $3, 'pending', $4)
        RETURNING *`,
-      [projectId, safeFileName, uploadedBy],
+      [projectId, safeFileName, uploadedBy, JSON.stringify(customFields)],
     );
 
     return NextResponse.json({ success: true, document: result.rows[0] });
