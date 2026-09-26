@@ -5,6 +5,13 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -32,10 +39,11 @@ export function IndexingDialog({
   doc: DocumentRow | null;
   projectName: string | undefined;
   schema: FieldDef[];
-  // When true, the user first picks which kind of document this is
-  // (fotos/contratos/cotizaciones, etc.) and the form below adapts to that
-  // choice instead of using a single fixed `schema`. Used for projects that
-  // hold a mix of document types rather than one fixed type.
+  // When true, a "Tipo de documento" dropdown appears at the top of the
+  // form (fotos/contratos/cotizaciones, etc.) and the fields below adapt to
+  // whichever type is selected, instead of using a single fixed `schema`.
+  // Used for projects that hold a mix of document types rather than one
+  // fixed type.
   allowTypePicker?: boolean;
   onClose: () => void;
   onIndexed: () => void;
@@ -53,10 +61,11 @@ export function IndexingDialog({
     setDocumentType(null);
   }
 
-  const needsTypeSelection = allowTypePicker && !documentType;
   const effectiveSchema = allowTypePicker
     ? getSchemaFor(documentType ?? undefined)
     : schema;
+  // With the picker on, fields only make sense once a type is chosen.
+  const canFillFields = !allowTypePicker || !!documentType;
 
   async function submit() {
     if (!doc) return;
@@ -109,50 +118,40 @@ export function IndexingDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {needsTypeSelection ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-6">
-            <p className="text-sm font-medium text-muted-foreground">
-              ¿Qué tipo de documento es?
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {DOCUMENT_TYPES.map((t) => (
-                <Button
-                  key={t.value}
-                  variant="outline"
-                  className="h-20 w-40 text-base"
-                  onClick={() => setDocumentType(t.value)}
-                >
-                  {t.label}
-                </Button>
-              ))}
-            </div>
+        <div className="flex flex-1 gap-6 overflow-hidden">
+          <div className="flex-1 overflow-hidden rounded-lg border bg-muted">
+            {doc && <DocumentPreview filename={doc.s3_key} />}
           </div>
-        ) : (
-          <div className="flex flex-1 gap-6 overflow-hidden">
-            <div className="flex-1 overflow-hidden rounded-lg border bg-muted">
-              {doc && <DocumentPreview filename={doc.s3_key} />}
-            </div>
 
-            <div className="w-80 shrink-0 space-y-4 overflow-y-auto">
-              {allowTypePicker && documentType && (
-                <div className="flex items-center justify-between rounded-md border bg-muted/40 px-3 py-2 text-sm">
-                  <span className="text-muted-foreground">
-                    Tipo:{' '}
-                    <span className="font-medium text-foreground">
-                      {DOCUMENT_TYPES.find((t) => t.value === documentType)
-                        ?.label ?? documentType}
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    className="text-xs text-muted-foreground underline hover:text-foreground"
-                    onClick={() => setDocumentType(null)}
-                  >
-                    Cambiar
-                  </button>
-                </div>
-              )}
-              {effectiveSchema.map((field) => (
+          <div className="w-80 shrink-0 space-y-4 overflow-y-auto">
+            {allowTypePicker && (
+              <div className="space-y-2">
+                <Label htmlFor="index-document-type">
+                  Tipo de documento
+                </Label>
+                <Select
+                  value={documentType ?? undefined}
+                  onValueChange={(value) => {
+                    setDocumentType(value as string);
+                    setValues({});
+                  }}
+                >
+                  <SelectTrigger id="index-document-type" className="w-full">
+                    <SelectValue placeholder="Selecciona un tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DOCUMENT_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {canFillFields &&
+              effectiveSchema.map((field) => (
                 <div key={field.key} className="space-y-2">
                   <Label htmlFor={`index-${field.key}`}>{field.label}</Label>
                   <Input
@@ -169,9 +168,8 @@ export function IndexingDialog({
                   />
                 </div>
               ))}
-            </div>
           </div>
-        )}
+        </div>
 
         <DialogFooter>
           <DialogClose
@@ -180,11 +178,9 @@ export function IndexingDialog({
           >
             Cancelar
           </DialogClose>
-          {!needsTypeSelection && (
-            <Button onClick={submit} disabled={submitting}>
-              {submitting ? 'Guardando...' : 'Guardar'}
-            </Button>
-          )}
+          <Button onClick={submit} disabled={submitting || !canFillFields}>
+            {submitting ? 'Guardando...' : 'Guardar'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

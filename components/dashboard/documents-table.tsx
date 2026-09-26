@@ -35,15 +35,6 @@ function isImageFile(filename: string | null): boolean {
 // Shows a small square thumbnail for image files (photos), falling back to
 // the generic FileTypeIcon for everything else (PDFs, docs, etc.).
 function FileThumbnail({ filename }: { filename: string | null }) {
-  if (filename && isImageFile(filename)) {
-    return (
-      <img
-        src={`/api/files/${encodeURIComponent(filename)}`}
-        alt=""
-        className="size-9 shrink-0 rounded object-cover"
-      />
-    );
-  }
   return <FileTypeIcon filename={filename} />;
 }
 
@@ -225,7 +216,11 @@ export function DocumentsTable({
                                   </span>
                                   <span
                                     className="truncate text-xs text-muted-foreground"
-                                    title={getValueByKey(doc, col.subKey, schema)}
+                                    title={getValueByKey(
+                                      doc,
+                                      col.subKey,
+                                      schema,
+                                    )}
                                   >
                                     {getValueByKey(doc, col.subKey, schema)}
                                   </span>
@@ -236,10 +231,7 @@ export function DocumentsTable({
                                 {col.icon && (
                                   <FileThumbnail filename={doc.s3_key} />
                                 )}
-                                <span
-                                  className="truncate"
-                                  title={mainValue}
-                                >
+                                <span className="truncate" title={mainValue}>
                                   {mainValue || '—'}
                                 </span>
                               </div>
