@@ -148,7 +148,11 @@ export function DocumentsTable({
               }}
             >
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Tipo de documento" />
+                <SelectValue placeholder="Tipo de documento">
+                  {typeFilter === 'all'
+                    ? 'Todos los tipos'
+                    : getDocumentTypeLabel(typeFilter)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los tipos</SelectItem>

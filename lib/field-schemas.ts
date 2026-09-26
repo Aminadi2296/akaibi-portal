@@ -107,10 +107,52 @@ export const DOCUMENT_TYPES: { value: string; label: string }[] = [
   { value: 'photos', label: 'Fotos' },
   { value: 'contract', label: 'Contratos' },
   { value: 'quote', label: 'Cotizaciones' },
+  { value: 'invoice', label: 'Facturas' },
+  { value: 'medical', label: 'Historias Médicas' },
 ];
 
+export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  photos: 'Fotos',
+  photo: 'Fotos',
+  foto: 'Fotos',
+  fotos: 'Fotos',
+  contract: 'Contratos',
+  contracts: 'Contratos',
+  contrato: 'Contratos',
+  contratos: 'Contratos',
+  quote: 'Cotizaciones',
+  quotes: 'Cotizaciones',
+  cotizacion: 'Cotizaciones',
+  cotizaciones: 'Cotizaciones',
+  invoice: 'Facturas',
+  invoices: 'Facturas',
+  factura: 'Facturas',
+  facturas: 'Facturas',
+  medical: 'Historias Médicas',
+  medico: 'Historias Médicas',
+  receipt: 'Recibos',
+  receipts: 'Recibos',
+  recibo: 'Recibos',
+  recibos: 'Recibos',
+  report: 'Reportes',
+  reports: 'Reportes',
+  document: 'Documentos',
+  documents: 'Documentos',
+  mixed: 'Mixto',
+  other: 'Otros',
+  others: 'Otros',
+  all: 'Todos los tipos',
+};
+
 export function getDocumentTypeLabel(value: string): string {
-  return DOCUMENT_TYPES.find((t) => t.value === value)?.label ?? value;
+  if (!value) return '';
+  const key = value.toLowerCase().trim();
+  if (DOCUMENT_TYPE_LABELS[key]) {
+    return DOCUMENT_TYPE_LABELS[key];
+  }
+  const match = DOCUMENT_TYPES.find((t) => t.value.toLowerCase() === key);
+  if (match) return match.label;
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 export const DEFAULT_SCHEMA = FIELD_SCHEMAS.medical;
