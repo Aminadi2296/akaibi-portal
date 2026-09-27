@@ -21,37 +21,45 @@ export async function GET(
     // Build the shared WHERE clause + params dynamically so extra optional
     // filters (search, documentType, more later) don't require manually
     // renumbering $N placeholders by hand.
-    const conditions: string[] = ['project_id = $1', `status = 'indexed'`];
+    const conditions: string[] = ['d.project_id = $1', `d.status = 'indexed'`];
     const baseParams: (string | number)[] = [id];
 
     if (search) {
       baseParams.push(`%${search}%`);
       const idx = baseParams.length;
       conditions.push(`(
-        s3_key ILIKE $${idx} OR
-        owner ILIKE $${idx} OR
-        place ILIKE $${idx} OR
-        custom_fields::text ILIKE $${idx}
+        d.s3_key ILIKE $${idx} OR
+        d.owner ILIKE $${idx} OR
+        d.place ILIKE $${idx} OR
+        d.custom_fields::text ILIKE $${idx}
       )`);
     }
 
     if (documentType) {
       baseParams.push(documentType);
-      conditions.push(`document_type = $${baseParams.length}`);
+      conditions.push(`d.document_type = $${baseParams.length}`);
     }
 
     const whereClause = conditions.join(' AND ');
 
     const dataParams = [...baseParams, pageSize, offset];
     const dataQuery = `
-      SELECT * FROM documents
+      SELECT 
+        d.*,
+        u_idx.name AS indexed_by_name,
+        u_idx.email AS indexed_by_email,
+        u_up.name AS uploaded_by_name,
+        u_up.email AS uploaded_by_email
+      FROM documents d
+      LEFT JOIN users u_idx ON d.indexed_by::text = u_idx.id::text
+      LEFT JOIN users u_up ON d.uploaded_by::text = u_up.id::text
       WHERE ${whereClause}
-      ORDER BY created_at DESC
+      ORDER BY d.created_at DESC
       LIMIT $${baseParams.length + 1} OFFSET $${baseParams.length + 2}
     `;
 
     const countQuery = `
-      SELECT COUNT(*) FROM documents
+      SELECT COUNT(*) FROM documents d
       WHERE ${whereClause}
     `;
 
@@ -60,7 +68,14 @@ export async function GET(
         pool.query(dataQuery, dataParams),
         pool.query(countQuery, baseParams),
         pool.query(
-          `SELECT * FROM documents WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC`,
+          `SELECT 
+             d.*,
+             u_up.name AS uploaded_by_name,
+             u_up.email AS uploaded_by_email
+           FROM documents d
+           LEFT JOIN users u_up ON d.uploaded_by::text = u_up.id::text
+           WHERE d.project_id = $1 AND d.status = 'pending' 
+           ORDER BY d.created_at DESC`,
           [id],
         ),
         // Distinct document types actually present in this project's

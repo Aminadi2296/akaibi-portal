@@ -17,6 +17,12 @@ export type DocumentRow = {
   custom_fields: Record<string, string> | null;
   created_at: string;
   document_type: string | null;
+  indexed_by?: string | number | null;
+  indexed_at?: string | null;
+  indexed_by_name?: string | null;
+  indexed_by_email?: string | null;
+  uploaded_by_name?: string | null;
+  uploaded_by_email?: string | null;
 };
 
 // ---- Per-project-type field schemas ----
