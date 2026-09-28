@@ -126,9 +126,7 @@ export function ViewDialog({
       <DialogContent
         className={cn(
           'flex flex-col transition-all duration-300 ease-in-out p-6 overflow-hidden',
-          showFile
-            ? 'h-[92vh] max-w-6xl'
-            : 'max-h-[85vh] max-w-xl',
+          showFile ? 'h-[92vh] max-w-6xl' : 'max-h-[85vh] max-w-xl',
         )}
       >
         {/* Header with Title, Badges, and Actions */}
@@ -194,7 +192,6 @@ export function ViewDialog({
                 </div>
               </div>
             </div>
-
           </div>
         </DialogHeader>
 
@@ -233,7 +230,9 @@ export function ViewDialog({
                           title="Abrir en pestaña nueva"
                         >
                           <ExternalLink className="size-3.5" />
-                          <span className="hidden sm:inline">Nueva pestaña</span>
+                          <span className="hidden sm:inline">
+                            Nueva pestaña
+                          </span>
                         </a>
                         <a
                           href={fileUrl}
@@ -328,22 +327,34 @@ export function ViewDialog({
                         <div className="flex flex-col min-w-0">
                           <p
                             className="text-xs font-semibold text-foreground truncate"
-                            title={doc.uploaded_by_name || doc.uploaded_by_email || `Usuario #${doc.uploaded_by}`}
+                            title={
+                              doc.uploaded_by_name ||
+                              doc.uploaded_by_email ||
+                              `Usuario #${doc.uploaded_by}`
+                            }
                           >
-                            {doc.uploaded_by_name || doc.uploaded_by_email || `Usuario #${doc.uploaded_by}`}
+                            {doc.uploaded_by_name ||
+                              doc.uploaded_by_email ||
+                              `Usuario #${doc.uploaded_by}`}
                           </p>
                           <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {new Date(doc.created_at).toLocaleDateString('es-ES', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
+                            {new Date(doc.created_at).toLocaleDateString(
+                              'es-ES',
+                              {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              },
+                            )}
                           </p>
                         </div>
                       </div>
 
                       {/* Indexado por */}
-                      {doc.indexed_by_name || doc.indexed_by_email || doc.indexed_by || doc.indexed_at ? (
+                      {doc.indexed_by_name ||
+                      doc.indexed_by_email ||
+                      doc.indexed_by ||
+                      doc.indexed_at ? (
                         <div className="space-y-1 min-w-0">
                           <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
                             <UserCheck className="size-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -352,17 +363,26 @@ export function ViewDialog({
                           <div className="flex flex-col min-w-0">
                             <p
                               className="text-xs font-semibold text-foreground truncate"
-                              title={doc.indexed_by_name || doc.indexed_by_email || `Usuario #${doc.indexed_by}`}
+                              title={
+                                doc.indexed_by_name ||
+                                doc.indexed_by_email ||
+                                `Usuario #${doc.indexed_by}`
+                              }
                             >
-                              {doc.indexed_by_name || doc.indexed_by_email || `Usuario #${doc.indexed_by}`}
+                              {doc.indexed_by_name ||
+                                doc.indexed_by_email ||
+                                `Usuario #${doc.indexed_by}`}
                             </p>
                             {doc.indexed_at && (
                               <p className="text-[11px] text-muted-foreground mt-0.5">
-                                {new Date(doc.indexed_at).toLocaleDateString('es-ES', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
+                                {new Date(doc.indexed_at).toLocaleDateString(
+                                  'es-ES',
+                                  {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                  },
+                                )}
                               </p>
                             )}
                           </div>
@@ -436,7 +456,9 @@ export function ViewDialog({
                   <div
                     className={cn(
                       'flex items-center gap-1 overflow-hidden transition-all duration-200 ease-in-out',
-                      showActions ? 'max-w-xs opacity-100' : 'max-w-0 opacity-0 pointer-events-none',
+                      showActions
+                        ? 'max-w-xs opacity-100'
+                        : 'max-w-0 opacity-0 pointer-events-none',
                     )}
                   >
                     <button
@@ -448,20 +470,19 @@ export function ViewDialog({
                     </button>
 
                     <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors whitespace-nowrap"
-                        >
-                          <Trash2 className="size-3.5 shrink-0" />
-                          Eliminar
-                        </button>
+                      <AlertDialogTrigger className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors whitespace-nowrap">
+                        <Trash2 className="size-3.5 shrink-0" />
+                        Eliminar
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>¿Seguro que quieres eliminar este documento?</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            ¿Seguro que quieres eliminar este documento?
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            Vas a eliminar &quot;{doc.s3_key}&quot; junto con todos sus datos indexados. Esta acción es irreversible: el archivo no se podrá recuperar.
+                            Vas a eliminar &quot;{doc.s3_key}&quot; junto con
+                            todos sus datos indexados. Esta acción es
+                            irreversible: el archivo no se podrá recuperar.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -472,7 +493,9 @@ export function ViewDialog({
                             Cancelar
                           </AlertDialogCancel>
                           <AlertDialogAction
-                            className={buttonVariants({ variant: 'destructive' })}
+                            className={buttonVariants({
+                              variant: 'destructive',
+                            })}
                             onClick={handleDelete}
                             disabled={deleting}
                           >
