@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { FileTypeIcon } from './file-preview';
 import type { DocumentRow } from '@/lib/field-schemas';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -23,6 +23,8 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
+
+const PAGE_SIZE = 10;
 
 export function PendingList({
   projectId,
@@ -36,21 +38,37 @@ export function PendingList({
   onIndexClick: (doc: DocumentRow) => void;
 }) {
   const [pending, setPending] = useState<DocumentRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DocumentRow | null>(null);
+
+  // Reset to page 1 whenever the project changes
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPage(1);
+  }, [projectId]);
 
   const load = useCallback(async () => {
     if (!projectId) return;
     setLoading(true);
+    const params = new URLSearchParams({
+      pendingPage: String(page),
+      pendingPageSize: String(PAGE_SIZE),
+      // Keep the indexed side of the response cheap since this component
+      // only needs pending data.
+      pageSize: '1',
+    });
     const res = await fetch(
-      `/api/projects/${projectId}/documents?page=1&pageSize=1`,
+      `/api/projects/${projectId}/documents?${params.toString()}`,
     );
     const data = await res.json();
     if (data.success) {
       setPending(data.pending);
+      setTotal(data.totalPending ?? data.pending.length);
     }
     setLoading(false);
-  }, [projectId]);
+  }, [projectId, page]);
 
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -63,6 +81,8 @@ export function PendingList({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load, refreshKey]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <>
@@ -128,6 +148,34 @@ export function PendingList({
                 </li>
               ))}
             </ul>
+          )}
+
+          {!loading && total > 0 && (
+            <div className="mt-4 flex items-center justify-between border-t pt-4">
+              <span className="text-sm text-muted-foreground">
+                Página {page} de {totalPages} · {total} en total
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="size-4" />
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Siguiente
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

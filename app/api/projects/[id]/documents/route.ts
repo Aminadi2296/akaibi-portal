@@ -18,6 +18,18 @@ export async function GET(
     const documentType = searchParams.get('documentType')?.trim() ?? '';
     const offset = (page - 1) * pageSize;
 
+    // Pending list has its own independent pagination (separate from the
+    // indexed table's page/pageSize above), defaulting to 10 per page.
+    const pendingPage = Math.max(
+      1,
+      Number(searchParams.get('pendingPage') ?? '1'),
+    );
+    const pendingPageSize = Math.min(
+      50,
+      Math.max(1, Number(searchParams.get('pendingPageSize') ?? '10')),
+    );
+    const pendingOffset = (pendingPage - 1) * pendingPageSize;
+
     // Build the shared WHERE clause + params dynamically so extra optional
     // filters (search, documentType, more later) don't require manually
     // renumbering $N placeholders by hand.
@@ -63,7 +75,7 @@ export async function GET(
       WHERE ${whereClause}
     `;
 
-    const [dataResult, countResult, pendingResult, typesResult] =
+    const [dataResult, countResult, pendingResult, pendingCountResult, typesResult] =
       await Promise.all([
         pool.query(dataQuery, dataParams),
         pool.query(countQuery, baseParams),
@@ -75,7 +87,12 @@ export async function GET(
            FROM documents d
            LEFT JOIN users u_up ON d.uploaded_by::text = u_up.id::text
            WHERE d.project_id = $1 AND d.status = 'pending' 
-           ORDER BY d.created_at DESC`,
+           ORDER BY d.created_at DESC
+           LIMIT $2 OFFSET $3`,
+          [id, pendingPageSize, pendingOffset],
+        ),
+        pool.query(
+          `SELECT COUNT(*) FROM documents WHERE project_id = $1 AND status = 'pending'`,
           [id],
         ),
         // Distinct document types actually present in this project's
@@ -95,6 +112,9 @@ export async function GET(
       page,
       pageSize,
       pending: pendingResult.rows,
+      totalPending: Number(pendingCountResult.rows[0].count),
+      pendingPage,
+      pendingPageSize,
       availableDocumentTypes: typesResult.rows.map((r) => r.document_type),
     });
   } catch (error) {
