@@ -11,11 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -293,10 +289,7 @@ export function UploadDialog({
                   : it,
               ),
             );
-            if (
-              data.error &&
-              data.error.toLowerCase().includes('límite')
-            ) {
+            if (data.error && data.error.toLowerCase().includes('límite')) {
               setError(data.error);
             }
           }
@@ -383,7 +376,7 @@ export function UploadDialog({
                 Archivos individuales
               </TabsTrigger>
               <TabsTrigger value="folder" className="flex-1 w-auto">
-                Carga masiva (Carpeta)
+                Carga masiva
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -465,7 +458,10 @@ export function UploadDialog({
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>
                   <strong className="text-foreground">{totalFiles}</strong>{' '}
-                  {totalFiles === 1 ? 'archivo seleccionado' : 'archivos seleccionados'} ({formatBytes(totalBytes)})
+                  {totalFiles === 1
+                    ? 'archivo seleccionado'
+                    : 'archivos seleccionados'}{' '}
+                  ({formatBytes(totalBytes)})
                 </span>
                 {!uploading && (
                   <button

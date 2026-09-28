@@ -9,11 +9,11 @@ import {
   Download,
   Copy,
   Check,
-  Calendar,
   Folder,
   FileText,
   UserCheck,
   UploadCloud,
+  Pencil,
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -61,6 +61,7 @@ export function ViewDialog({
   const [showFile, setShowFile] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showActions, setShowActions] = useState(false);
 
   // Reset back to clean view whenever a different document opens
   const [lastDocId, setLastDocId] = useState<number | null>(null);
@@ -68,6 +69,7 @@ export function ViewDialog({
     setLastDocId(doc.id);
     setShowFile(false);
     setCopied(false);
+    setShowActions(false);
   }
 
   // Resolve effective schema: uses the document's own document_type if set (e.g. photos, invoice, contract, quote),
@@ -193,40 +195,6 @@ export function ViewDialog({
               </div>
             </div>
 
-            {/* Delete action (admin, or employee within their linked projects) */}
-            {doc && (userRole === 'admin' || userRole === 'employee') && (
-              <AlertDialog>
-                <AlertDialogTrigger
-                  className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
-                  title="Eliminar documento"
-                >
-                  <Trash2 className="size-4" />
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Seguro que quieres eliminar este documento?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Vas a eliminar &quot;{doc.s3_key}&quot; junto con todos sus datos indexados. Esta acción es irreversible: el archivo no se podrá recuperar.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel
-                      className={buttonVariants({ variant: 'outline' })}
-                      disabled={deleting}
-                    >
-                      Cancelar
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      className={buttonVariants({ variant: 'destructive' })}
-                      onClick={handleDelete}
-                      disabled={deleting}
-                    >
-                      {deleting ? 'Eliminando…' : 'Sí, eliminar'}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
           </div>
         </DialogHeader>
 
@@ -347,65 +315,70 @@ export function ViewDialog({
                   </div>
                 ))}
 
-                {/* Subido por */}
+                {/* Subido por + Indexado por — always on the same row */}
                 {doc && (
-                  <div className="space-y-1 col-span-1 border-t pt-3 mt-1 min-w-0">
-                    <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
-                      <UploadCloud className="size-3 text-muted-foreground shrink-0" />
-                      Subido por
-                    </p>
-                    <div className="flex flex-col min-w-0">
-                      <p
-                        className="text-xs font-semibold text-foreground truncate"
-                        title={doc.uploaded_by_name || doc.uploaded_by_email || `Usuario #${doc.uploaded_by}`}
-                      >
-                        {doc.uploaded_by_name || doc.uploaded_by_email || `Usuario #${doc.uploaded_by}`}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {new Date(doc.created_at).toLocaleDateString('es-ES', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Indexado por */}
-                {doc?.indexed_by_name || doc?.indexed_by_email || doc?.indexed_by || doc?.indexed_at ? (
-                  <div className="space-y-1 col-span-1 border-t pt-3 mt-1 min-w-0">
-                    <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
-                      <UserCheck className="size-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      Indexado por
-                    </p>
-                    <div className="flex flex-col min-w-0">
-                      <p
-                        className="text-xs font-semibold text-foreground truncate"
-                        title={doc.indexed_by_name || doc.indexed_by_email || `Usuario #${doc.indexed_by}`}
-                      >
-                        {doc.indexed_by_name || doc.indexed_by_email || `Usuario #${doc.indexed_by}`}
-                      </p>
-                      {doc.indexed_at && (
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          {new Date(doc.indexed_at).toLocaleDateString('es-ES', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
+                  <div className="col-span-2 border-t pt-3 mt-1">
+                    <div className="grid grid-cols-2 gap-3.5">
+                      {/* Subido por */}
+                      <div className="space-y-1 min-w-0">
+                        <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
+                          <UploadCloud className="size-3 text-muted-foreground shrink-0" />
+                          Subido por
                         </p>
+                        <div className="flex flex-col min-w-0">
+                          <p
+                            className="text-xs font-semibold text-foreground truncate"
+                            title={doc.uploaded_by_name || doc.uploaded_by_email || `Usuario #${doc.uploaded_by}`}
+                          >
+                            {doc.uploaded_by_name || doc.uploaded_by_email || `Usuario #${doc.uploaded_by}`}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {new Date(doc.created_at).toLocaleDateString('es-ES', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Indexado por */}
+                      {doc.indexed_by_name || doc.indexed_by_email || doc.indexed_by || doc.indexed_at ? (
+                        <div className="space-y-1 min-w-0">
+                          <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
+                            <UserCheck className="size-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            Indexado por
+                          </p>
+                          <div className="flex flex-col min-w-0">
+                            <p
+                              className="text-xs font-semibold text-foreground truncate"
+                              title={doc.indexed_by_name || doc.indexed_by_email || `Usuario #${doc.indexed_by}`}
+                            >
+                              {doc.indexed_by_name || doc.indexed_by_email || `Usuario #${doc.indexed_by}`}
+                            </p>
+                            {doc.indexed_at && (
+                              <p className="text-[11px] text-muted-foreground mt-0.5">
+                                {new Date(doc.indexed_at).toLocaleDateString('es-ES', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1 min-w-0">
+                          <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
+                            <UserCheck className="size-3 text-muted-foreground shrink-0" />
+                            Indexado por
+                          </p>
+                          <p className="text-xs text-muted-foreground/60 italic">
+                            Pendiente
+                          </p>
+                        </div>
                       )}
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-1 col-span-1 border-t pt-3 mt-1 min-w-0">
-                    <p className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
-                      <UserCheck className="size-3 text-muted-foreground shrink-0" />
-                      Indexado por
-                    </p>
-                    <p className="text-xs text-muted-foreground/60 italic">
-                      Pendiente
-                    </p>
                   </div>
                 )}
 
@@ -443,19 +416,73 @@ export function ViewDialog({
                 )}
               </Button>
 
-              {fileUrl && (
-                <a
-                  href={fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    buttonVariants({ variant: 'ghost', size: 'default' }),
-                    'w-full gap-2 text-xs text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  <ExternalLink className="size-3.5" />
-                  Abrir en pestaña nueva
-                </a>
+              {/* Secondary actions row */}
+              {doc && (userRole === 'admin' || userRole === 'employee') && (
+                <div className="flex items-center justify-center gap-1">
+                  {/* Toggle actions button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowActions((v) => !v)}
+                    className={cn(
+                      'rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                      showActions && 'bg-muted text-foreground',
+                    )}
+                    title="Acciones"
+                  >
+                    Acciones
+                  </button>
+
+                  {/* Expandable edit + delete buttons */}
+                  <div
+                    className={cn(
+                      'flex items-center gap-1 overflow-hidden transition-all duration-200 ease-in-out',
+                      showActions ? 'max-w-xs opacity-100' : 'max-w-0 opacity-0 pointer-events-none',
+                    )}
+                  >
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors whitespace-nowrap"
+                    >
+                      <Pencil className="size-3.5 shrink-0" />
+                      Editar
+                    </button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors whitespace-nowrap"
+                        >
+                          <Trash2 className="size-3.5 shrink-0" />
+                          Eliminar
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Seguro que quieres eliminar este documento?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Vas a eliminar &quot;{doc.s3_key}&quot; junto con todos sus datos indexados. Esta acción es irreversible: el archivo no se podrá recuperar.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel
+                            className={buttonVariants({ variant: 'outline' })}
+                            disabled={deleting}
+                          >
+                            Cancelar
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            className={buttonVariants({ variant: 'destructive' })}
+                            onClick={handleDelete}
+                            disabled={deleting}
+                          >
+                            {deleting ? 'Eliminando…' : 'Sí, eliminar'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
               )}
             </div>
           </div>
