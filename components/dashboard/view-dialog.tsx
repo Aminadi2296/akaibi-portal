@@ -193,8 +193,8 @@ export function ViewDialog({
               </div>
             </div>
 
-            {/* Admin Delete Action */}
-            {doc && userRole === 'admin' && (
+            {/* Delete action (admin, or employee within their linked projects) */}
+            {doc && (userRole === 'admin' || userRole === 'employee') && (
               <AlertDialog>
                 <AlertDialogTrigger
                   className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg border text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors"
@@ -204,20 +204,24 @@ export function ViewDialog({
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>¿Eliminar este documento?</AlertDialogTitle>
+                    <AlertDialogTitle>¿Seguro que quieres eliminar este documento?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Esta acción eliminará permanentemente &quot;{doc.s3_key}&quot; y todos sus datos indexados. No se puede deshacer.
+                      Vas a eliminar &quot;{doc.s3_key}&quot; junto con todos sus datos indexados. Esta acción es irreversible: el archivo no se podrá recuperar.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel disabled={deleting}>
+                    <AlertDialogCancel
+                      className={buttonVariants({ variant: 'outline' })}
+                      disabled={deleting}
+                    >
                       Cancelar
                     </AlertDialogCancel>
                     <AlertDialogAction
+                      className={buttonVariants({ variant: 'destructive' })}
                       onClick={handleDelete}
                       disabled={deleting}
                     >
-                      {deleting ? 'Eliminando…' : 'Eliminar'}
+                      {deleting ? 'Eliminando…' : 'Sí, eliminar'}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
