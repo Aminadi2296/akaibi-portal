@@ -8,16 +8,36 @@ export default function LandingPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<
+    'success' | 'error' | null
+  >(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const subject = encodeURIComponent(
-      `Quiero saber más sobre Akaibi Portal — ${name || 'Sin nombre'}`,
-    );
-    const body = encodeURIComponent(
-      `Nombre: ${name}\nCorreo: ${email}\n\nMensaje:\n${message}`,
-    );
-    window.location.href = `mailto:contacto@akaibiportal.com?subject=${subject}&body=${body}`;
+    setIsSending(true);
+    setSubmissionStatus(null);
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message }),
+      });
+
+      if (!response.ok) {
+        throw new Error('No se pudo enviar el mensaje. Inténtalo de nuevo.');
+      }
+
+      setName('');
+      setEmail('');
+      setMessage('');
+      setSubmissionStatus('success');
+    } catch {
+      setSubmissionStatus('error');
+    } finally {
+      setIsSending(false);
+    }
   }
   return (
     <main className="min-h-screen bg-[#faf9f7] text-[#1a1a1a]">
@@ -280,10 +300,21 @@ export default function LandingPage() {
 
               <button
                 type="submit"
-                className="mt-1 rounded-full bg-[#bc002d] px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-[#9c0026]"
+                disabled={isSending}
+                className="mt-1 rounded-full bg-[#bc002d] px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-[#9c0026] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Enviar
+                {isSending ? 'Enviando...' : 'Enviar'}
               </button>
+              {submissionStatus && (
+                <p
+                  role={submissionStatus === 'error' ? 'alert' : 'status'}
+                  className={`text-sm ${submissionStatus === 'success' ? 'text-[#1f7a44]' : 'text-[#bc002d]'}`}
+                >
+                  {submissionStatus === 'success'
+                    ? 'Mensaje enviado. Nos pondremos en contacto contigo pronto.'
+                    : 'No se pudo enviar el mensaje. Inténtalo de nuevo más tarde.'}
+                </p>
+              )}
             </form>
           </div>
         </div>
