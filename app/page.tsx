@@ -42,33 +42,35 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-[#faf9f7] text-[#1a1a1a]">
       {/* Nav */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <div className="flex items-center gap-2">
-          <img src="/akaibi-logo.svg" alt="Akaibi" className="h-7 w-auto" />
-        </div>
+      <header className="sticky top-0 z-50 border-b border-[#efece6] bg-[#faf9f7]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+          <div className="flex items-center gap-2">
+            <img src="/akaibi-logo.svg" alt="Akaibi" className="h-7 w-auto" />
+          </div>
 
-        <div className="flex items-center gap-8">
-          <nav className="hidden items-center gap-8 text-sm text-[#4a4a4a] md:flex">
-            <a
-              href="#servicios"
-              className="relative hover:text-[#1a1a1a] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[#bc002d] after:transition-transform after:duration-200 hover:after:scale-x-100"
-            >
-              Servicios
-            </a>
-            <a
-              href="#contacto"
-              className="relative hover:text-[#1a1a1a] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[#bc002d] after:transition-transform after:duration-200 hover:after:scale-x-100"
-            >
-              Contacto
-            </a>
-          </nav>
+          <div className="flex items-center gap-8">
+            <nav className="hidden items-center gap-8 text-sm text-[#4a4a4a] md:flex">
+              <a
+                href="#servicios"
+                className="relative hover:text-[#1a1a1a] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[#bc002d] after:transition-transform after:duration-200 hover:after:scale-x-100"
+              >
+                Servicios
+              </a>
+              <a
+                href="#contacto"
+                className="relative hover:text-[#1a1a1a] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[#bc002d] after:transition-transform after:duration-200 hover:after:scale-x-100"
+              >
+                Contacto
+              </a>
+            </nav>
 
-          <Link
-            href="/login"
-            className="rounded-full bg-[#bc002d] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#9c0026]"
-          >
-            Iniciar sesión
-          </Link>
+            <Link
+              href="/login"
+              className="rounded-full bg-[#bc002d] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#9c0026]"
+            >
+              Iniciar sesión
+            </Link>
+          </div>
         </div>
       </header>
 
