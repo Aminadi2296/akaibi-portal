@@ -47,33 +47,27 @@ export default function LandingPage() {
           <img src="/akaibi-logo.svg" alt="Akaibi" className="h-7 w-auto" />
         </div>
 
-        <nav className="hidden items-center gap-8 text-sm text-[#4a4a4a] md:flex">
-          <a
-            href="#servicios"
-            className="relative hover:text-[#1a1a1a] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[#bc002d] after:transition-transform after:duration-200 hover:after:scale-x-100"
-          >
-            Servicios
-          </a>
-          <a
-            href="#contacto"
-            className="relative hover:text-[#1a1a1a] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[#bc002d] after:transition-transform after:duration-200 hover:after:scale-x-100"
-          >
-            Contacto
-          </a>
-        </nav>
+        <div className="flex items-center gap-8">
+          <nav className="hidden items-center gap-8 text-sm text-[#4a4a4a] md:flex">
+            <a
+              href="#servicios"
+              className="relative hover:text-[#1a1a1a] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[#bc002d] after:transition-transform after:duration-200 hover:after:scale-x-100"
+            >
+              Servicios
+            </a>
+            <a
+              href="#contacto"
+              className="relative hover:text-[#1a1a1a] after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:origin-left after:scale-x-0 after:bg-[#bc002d] after:transition-transform after:duration-200 hover:after:scale-x-100"
+            >
+              Contacto
+            </a>
+          </nav>
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="hidden text-sm font-medium text-[#4a4a4a] hover:text-[#1a1a1a] sm:block"
-          >
-            Iniciar sesión
-          </Link>
           <Link
             href="/login"
             className="rounded-full bg-[#bc002d] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#9c0026]"
           >
-            Comenzar
+            Iniciar sesión
           </Link>
         </div>
       </header>
@@ -98,17 +92,11 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-4">
-            <Link
-              href="/login"
-              className="rounded-full bg-[#1a1a1a] px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-[#333]"
-            >
-              Ver una demo
-            </Link>
             <a
               href="#contacto"
-              className="text-sm font-medium text-[#1a1a1a] underline decoration-[#bc002d] decoration-2 underline-offset-4"
+              className="rounded-full bg-[#1a1a1a] px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-[#333]"
             >
-              Hablar con nosotros
+              Habla con nosotros
             </a>
           </div>
         </div>
