@@ -478,14 +478,15 @@ export function ViewDialog({
                         <Trash2 className="size-3.5 shrink-0" />
                         Eliminar
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="w-[calc(100vw-2rem)]">
                         <AlertDialogHeader>
                           <AlertDialogTitle>
                             ¿Seguro que quieres eliminar este documento?
                           </AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Vas a eliminar &quot;{doc.s3_key}&quot; junto con
-                            todos sus datos indexados. Esta acción es
+                          <AlertDialogDescription className="min-w-0">
+                            Vas a eliminar &quot;
+                            <span className="break-all">{doc.s3_key}</span>{' '}
+                            junto con todos sus datos indexados. Esta acción es
                             irreversible: el archivo no se podrá recuperar.
                           </AlertDialogDescription>
                         </AlertDialogHeader>

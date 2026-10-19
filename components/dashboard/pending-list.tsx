@@ -188,9 +188,10 @@ export function PendingList({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Borrar este documento?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Seguro que deseas borrar &quot;{deleteTarget?.s3_key}&quot;?. Esta
-              acción no se puede deshacer.
+            <AlertDialogDescription className="min-w-0">
+              Seguro que deseas borrar &quot;
+              <span className="break-all">{deleteTarget?.s3_key}</span>
+              &quot;?. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
