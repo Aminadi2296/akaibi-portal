@@ -110,18 +110,20 @@ export const FIELD_SCHEMAS: Record<string, FieldDef[]> = {
 // TABLE_COLUMNS above, so document types and project types share the exact
 // same schema config — no duplication.
 export const DOCUMENT_TYPES: { value: string; label: string }[] = [
-  { value: 'photos', label: 'Fotos' },
-  { value: 'contract', label: 'Contratos' },
-  { value: 'quote', label: 'Cotizaciones' },
-  { value: 'invoice', label: 'Facturas' },
-  { value: 'medical', label: 'Historias Médicas' },
+  { value: 'Fotos', label: 'Fotos' },
+  { value: 'contratos', label: 'Contratos' },
+  { value: 'Cotizaciones', label: 'Cotizaciones' },
+  { value: 'Facturas', label: 'Facturas' },
+  { value: 'Historias Medicas', label: 'Historias Médicas' },
 ];
 
 export const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  Fotos: 'Fotos',
   photos: 'Fotos',
   photo: 'Fotos',
   foto: 'Fotos',
   fotos: 'Fotos',
+  Contratos: 'Contratos',
   contract: 'Contratos',
   contracts: 'Contratos',
   contrato: 'Contratos',
@@ -365,7 +367,9 @@ export function getTableColumnsFor(
 // Resolves table columns for one specific document type value (from the
 // type filter). When no type is selected ("Todos"), returns the neutral
 // mixed-view columns instead of guessing at any one type's layout.
-export function getTableColumnsForType(type: string | undefined): TableColumn[] {
+export function getTableColumnsForType(
+  type: string | undefined,
+): TableColumn[] {
   if (!type) return MIXED_ALL_TYPES_COLUMNS;
   return TABLE_COLUMNS[type] ?? MIXED_ALL_TYPES_COLUMNS;
 }
@@ -383,9 +387,7 @@ export function getValueByKey(
 ): string {
   if (key === 's3_key') return doc.s3_key ?? '';
   if (key === 'created_at') {
-    return doc.created_at
-      ? new Date(doc.created_at).toLocaleDateString()
-      : '';
+    return doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '';
   }
   if (key === 'document_type') {
     return doc.document_type ? getDocumentTypeLabel(doc.document_type) : '';
