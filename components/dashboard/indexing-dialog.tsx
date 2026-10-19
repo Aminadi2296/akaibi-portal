@@ -112,20 +112,20 @@ export function IndexingDialog({
         if (!open) onClose();
       }}
     >
-      <DialogContent className="!fixed !inset-0 !top-0 !left-0 flex h-screen w-screen max-w-none !translate-x-0 !translate-y-0 flex-col rounded-none">
-        <DialogHeader>
+      <DialogContent className="!fixed !inset-0 !top-0 !left-0 flex h-dvh w-screen max-w-none !translate-x-0 !translate-y-0 flex-col rounded-none p-4 sm:p-6">
+        <DialogHeader className="shrink-0">
           <DialogTitle>Indexar documento</DialogTitle>
           <DialogDescription title={doc?.s3_key ?? ''}>
             {doc?.s3_key} · {projectName}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-1 gap-6 overflow-hidden">
-          <div className="flex-1 overflow-hidden rounded-lg border bg-muted">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden md:flex-row md:gap-6">
+          <div className="h-[30vh] min-h-36 shrink-0 overflow-hidden rounded-lg border bg-muted md:h-auto md:min-h-0 md:flex-1">
             {doc && <DocumentPreview filename={doc.s3_key} />}
           </div>
 
-          <div className="w-80 shrink-0 space-y-4 overflow-y-auto">
+          <div className="min-h-0 w-full flex-1 space-y-4 overflow-y-auto md:w-80 md:flex-none">
             {allowTypePicker && (
               <div className="space-y-2">
                 <Label htmlFor="index-document-type">
@@ -173,7 +173,7 @@ export function IndexingDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <DialogClose
             className={buttonVariants({ variant: 'outline' })}
             type="button"
