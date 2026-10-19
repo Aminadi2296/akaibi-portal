@@ -125,8 +125,10 @@ export function ViewDialog({
     >
       <DialogContent
         className={cn(
-          'flex flex-col transition-all duration-300 ease-in-out p-6 overflow-hidden',
-          showFile ? 'h-[92vh] max-w-6xl' : 'max-h-[85vh] max-w-xl',
+          'flex flex-col overflow-hidden p-4 transition-all duration-300 ease-in-out md:p-6',
+          showFile
+            ? 'h-[92dvh] w-[calc(100vw-1rem)] max-w-6xl md:h-[92vh] md:w-full'
+            : 'max-h-[85vh] max-w-xl',
         )}
       >
         {/* Header with Title, Badges, and Actions */}
@@ -196,14 +198,14 @@ export function ViewDialog({
         </DialogHeader>
 
         {/* Content Body: Smooth sliding preview panel + metadata panel */}
-        <div className="flex flex-1 gap-5 overflow-hidden pt-4 min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden pt-4 md:flex-row md:gap-5">
           {/* File Preview Panel (Animates open sliding smoothly) */}
           <div
             className={cn(
               'flex flex-col overflow-hidden rounded-xl border bg-muted/20 transition-all duration-300 ease-in-out',
               showFile
-                ? 'flex-1 opacity-100'
-                : 'w-0 opacity-0 border-0 pointer-events-none p-0 m-0',
+                ? 'h-[32vh] min-h-36 w-full shrink-0 opacity-100 md:h-auto md:min-h-0 md:flex-1'
+                : 'h-0 w-full border-0 p-0 opacity-0 pointer-events-none md:h-auto md:w-0',
             )}
           >
             {doc && showFile && (
@@ -262,7 +264,9 @@ export function ViewDialog({
           <div
             className={cn(
               'flex flex-col space-y-4 overflow-y-auto transition-all duration-300 ease-in-out pr-1 min-h-0',
-              showFile ? 'w-80 shrink-0' : 'w-full',
+              showFile
+                ? 'w-full flex-1 md:w-80 md:flex-none'
+                : 'w-full md:flex-1',
             )}
           >
             {/* Metadata Card */}
