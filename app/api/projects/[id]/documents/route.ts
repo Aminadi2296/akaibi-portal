@@ -41,6 +41,7 @@ export async function GET(
       const idx = baseParams.length;
       conditions.push(`(
         d.s3_key ILIKE $${idx} OR
+        d.custom_fields->>'documentName' ILIKE $${idx} OR
         d.owner ILIKE $${idx} OR
         d.place ILIKE $${idx} OR
         d.custom_fields::text ILIKE $${idx}
@@ -124,4 +125,3 @@ export async function GET(
     );
   }
 }
-

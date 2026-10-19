@@ -17,10 +17,22 @@ export async function GET(
   try {
     const { filename } = await params;
     const safeName = decodeURIComponent(filename);
+    const downloadName = request.nextUrl.searchParams.get('downloadName');
+    const encodedDownloadName = downloadName
+      ? encodeURIComponent(downloadName).replace(/['()*]/g, (character) => {
+          const hex = character.charCodeAt(0).toString(16).toUpperCase();
+          return `%${hex}`;
+        })
+      : null;
 
     const command = new GetObjectCommand({
       Bucket: process.env.AWS_S3_BUCKET,
       Key: safeName,
+      ...(encodedDownloadName
+        ? {
+            ResponseContentDisposition: `attachment; filename*=UTF-8''${encodedDownloadName}`,
+          }
+        : {}),
     });
 
     // Generates a temporary, secure link (expires in 5 minutes) instead of

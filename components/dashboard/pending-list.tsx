@@ -10,7 +10,10 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { FileTypeIcon } from './file-preview';
-import type { DocumentRow } from '@/lib/field-schemas';
+import {
+  getDocumentDisplayName,
+  type DocumentRow,
+} from '@/lib/field-schemas';
 import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import {
@@ -112,9 +115,9 @@ export function PendingList({
                     <div className="flex flex-col min-w-0">
                       <span
                         className="max-w-[280px] truncate text-sm font-medium"
-                        title={doc.s3_key ?? ''}
+                        title={getDocumentDisplayName(doc)}
                       >
-                        {doc.s3_key}
+                        {getDocumentDisplayName(doc)}
                       </span>
                       {doc.custom_fields?.relativePath && (
                         <span
@@ -190,7 +193,9 @@ export function PendingList({
             <AlertDialogTitle>Borrar este documento?</AlertDialogTitle>
             <AlertDialogDescription className="min-w-0">
               Seguro que deseas borrar &quot;
-              <span className="break-all">{deleteTarget?.s3_key}</span>
+              <span className="break-all">
+                {deleteTarget ? getDocumentDisplayName(deleteTarget) : ''}
+              </span>
               &quot;?. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>

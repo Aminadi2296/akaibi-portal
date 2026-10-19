@@ -18,6 +18,33 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const { owner, dateRecorded, place, customFields, documentType } = body;
+    const documentName =
+      typeof customFields?.documentName === 'string'
+        ? customFields.documentName.trim()
+        : '';
+
+    if (!documentName) {
+      return NextResponse.json(
+        { success: false, error: 'El nombre del documento es obligatorio.' },
+        { status: 400 },
+      );
+    }
+    if (
+      documentName.length > 255 ||
+      /[\u0000-\u001f\u007f]/.test(documentName)
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'El nombre del documento no es válido.' },
+        { status: 400 },
+      );
+    }
+
+    const savedCustomFields =
+      customFields &&
+      typeof customFields === 'object' &&
+      !Array.isArray(customFields)
+        ? { ...customFields, documentName }
+        : { documentName };
 
     const result = await pool.query(
       `UPDATE documents
@@ -35,7 +62,7 @@ export async function PATCH(
         owner ?? null,
         dateRecorded ?? null,
         place ?? null,
-        JSON.stringify(customFields ?? {}),
+        JSON.stringify(savedCustomFields),
         session.userId,
         documentType ?? null,
         id,

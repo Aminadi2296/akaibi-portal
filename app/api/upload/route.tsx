@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSession } from '@/lib/session';
+import { getDocumentNameFromFilename } from '@/lib/field-schemas';
 
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -80,7 +81,10 @@ export async function POST(request: NextRequest) {
       }),
     );
 
-    const customFields = relativePath ? { relativePath } : {};
+    const customFields = {
+      ...(relativePath ? { relativePath } : {}),
+      documentName: getDocumentNameFromFilename(file.name),
+    };
 
     const result = await pool.query(
       `INSERT INTO documents (project_id, s3_key, uploaded_by, status, custom_fields)
@@ -97,4 +101,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

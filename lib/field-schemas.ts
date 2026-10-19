@@ -25,6 +25,29 @@ export type DocumentRow = {
   uploaded_by_email?: string | null;
 };
 
+export function getDocumentNameFromFilename(
+  filename: string | null | undefined,
+): string {
+  const name = filename?.split(/[\\/]/).pop()?.trim() ?? '';
+  const extensionIndex = name.lastIndexOf('.');
+  return extensionIndex > 0 ? name.slice(0, extensionIndex) : name;
+}
+
+export function getDocumentDisplayName(
+  doc: Pick<DocumentRow, 's3_key' | 'custom_fields'>,
+): string {
+  const storedName = doc.s3_key?.split(/[\\/]/).pop() ?? '';
+  const originalName = storedName
+    .replace(/^\d+-[a-z0-9]{6}-/i, '')
+    .replace(/_/g, ' ');
+  return (
+    doc.custom_fields?.documentName?.trim() ||
+    getDocumentNameFromFilename(originalName) ||
+    doc.s3_key ||
+    ''
+  );
+}
+
 // ---- Per-project-type field schemas ----
 // Each field either maps to a real documents table column (owner/date_recorded/place)
 // or, if it has no mapsTo, lives inside the flexible custom_fields JSONB column.
@@ -385,7 +408,7 @@ export function getValueByKey(
   key: string,
   schema?: FieldDef[],
 ): string {
-  if (key === 's3_key') return doc.s3_key ?? '';
+  if (key === 's3_key') return getDocumentDisplayName(doc);
   if (key === 'created_at') {
     return doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '';
   }

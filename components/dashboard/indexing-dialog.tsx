@@ -23,6 +23,7 @@ import {
 import { DocumentPreview } from './file-preview';
 import {
   DOCUMENT_TYPES,
+  getDocumentDisplayName,
   getSchemaFor,
   type DocumentRow,
   type FieldDef,
@@ -49,6 +50,7 @@ export function IndexingDialog({
   onIndexed: () => void;
 }) {
   const [values, setValues] = useState<Record<string, string>>({});
+  const [documentName, setDocumentName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [documentType, setDocumentType] = useState<string | null>(null);
 
@@ -58,6 +60,7 @@ export function IndexingDialog({
   if (doc && doc.id !== lastDocId) {
     setLastDocId(doc.id);
     setValues({});
+    setDocumentName(getDocumentDisplayName(doc));
     setDocumentType(null);
   }
 
@@ -76,6 +79,7 @@ export function IndexingDialog({
     let place: string | null = null;
     const customFields: Record<string, string> = {
       ...(doc.custom_fields ?? {}),
+      documentName: documentName.trim(),
     };
 
     for (const field of effectiveSchema) {
@@ -115,8 +119,8 @@ export function IndexingDialog({
       <DialogContent className="!fixed !inset-0 !top-0 !left-0 flex h-dvh w-screen max-w-none !translate-x-0 !translate-y-0 flex-col rounded-none p-4 sm:p-6">
         <DialogHeader className="shrink-0">
           <DialogTitle>Indexar documento</DialogTitle>
-          <DialogDescription title={doc?.s3_key ?? ''}>
-            {doc?.s3_key} · {projectName}
+          <DialogDescription title={doc ? getDocumentDisplayName(doc) : ''}>
+            {doc ? getDocumentDisplayName(doc) : ''} · {projectName}
           </DialogDescription>
         </DialogHeader>
 
@@ -126,6 +130,19 @@ export function IndexingDialog({
           </div>
 
           <div className="min-h-0 w-full flex-1 space-y-4 overflow-y-auto md:w-80 md:flex-none">
+            <div className="space-y-2">
+              <Label htmlFor="index-document-name">
+                Nombre del archivo (sin extensión)
+              </Label>
+              <Input
+                id="index-document-name"
+                value={documentName}
+                onChange={(e) => setDocumentName(e.target.value)}
+                maxLength={255}
+                required
+              />
+            </div>
+
             {allowTypePicker && (
               <div className="space-y-2">
                 <Label htmlFor="index-document-type">
@@ -180,7 +197,10 @@ export function IndexingDialog({
           >
             Cancelar
           </DialogClose>
-          <Button onClick={submit} disabled={submitting || !canFillFields}>
+          <Button
+            onClick={submit}
+            disabled={submitting || !canFillFields || !documentName.trim()}
+          >
             {submitting ? 'Guardando...' : 'Guardar'}
           </Button>
         </DialogFooter>

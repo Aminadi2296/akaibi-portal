@@ -37,6 +37,7 @@ import { DocumentPreview, FileTypeIcon } from './file-preview';
 import {
   getFieldValue,
   getDocumentTypeLabel,
+  getDocumentDisplayName,
   getSchemaFor,
   type DocumentRow,
   type FieldDef,
@@ -77,16 +78,21 @@ export function ViewDialog({
   const effectiveSchema = doc?.document_type
     ? getSchemaFor(doc.document_type)
     : schema;
+  const documentDisplayName = doc ? getDocumentDisplayName(doc) : '';
 
   // Extra custom fields in doc.custom_fields not in schema and not 'relativePath'
   const schemaKeys = new Set(effectiveSchema.map((f) => f.key));
   const extraFields = Object.entries(doc?.custom_fields ?? {}).filter(
-    ([k, v]) => !schemaKeys.has(k) && k !== 'relativePath' && v,
+    ([k, v]) =>
+      !schemaKeys.has(k) &&
+      k !== 'relativePath' &&
+      k !== 'documentName' &&
+      v,
   );
 
   function handleCopyName() {
     if (!doc?.s3_key) return;
-    navigator.clipboard.writeText(doc.s3_key);
+    navigator.clipboard.writeText(documentDisplayName);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -115,6 +121,14 @@ export function ViewDialog({
   const fileUrl = doc?.s3_key
     ? `/api/files/${encodeURIComponent(doc.s3_key)}`
     : null;
+  const storedFilename = doc?.s3_key?.split(/[\\/]/).pop() ?? '';
+  const extensionIndex = storedFilename.lastIndexOf('.');
+  const fileExtension =
+    extensionIndex > 0 ? storedFilename.slice(extensionIndex + 1) : null;
+  const downloadUrl =
+    fileUrl && fileExtension
+      ? `${fileUrl}?downloadName=${encodeURIComponent(`${documentDisplayName}.${fileExtension}`)}`
+      : fileUrl;
 
   return (
     <Dialog
@@ -140,8 +154,8 @@ export function ViewDialog({
               </div>
               <div className="flex flex-col min-w-0">
                 <DialogTitle className="text-base font-semibold truncate flex items-center gap-2">
-                  <span className="truncate" title={doc?.s3_key ?? ''}>
-                    {doc?.s3_key ?? 'Documento'}
+                  <span className="truncate" title={documentDisplayName}>
+                    {documentDisplayName || 'Documento'}
                   </span>
                   {doc?.s3_key && (
                     <button
@@ -237,7 +251,7 @@ export function ViewDialog({
                           </span>
                         </a>
                         <a
-                          href={fileUrl}
+                          href={downloadUrl ?? undefined}
                           download
                           className={cn(
                             buttonVariants({ variant: 'ghost', size: 'xs' }),
@@ -485,7 +499,9 @@ export function ViewDialog({
                           </AlertDialogTitle>
                           <AlertDialogDescription className="min-w-0">
                             Vas a eliminar &quot;
-                            <span className="break-all">{doc.s3_key}</span>{' '}
+                            <span className="break-all">
+                              {documentDisplayName}
+                            </span>{' '}
                             junto con todos sus datos indexados. Esta acción es
                             irreversible: el archivo no se podrá recuperar.
                           </AlertDialogDescription>
